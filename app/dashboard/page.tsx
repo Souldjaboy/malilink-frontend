@@ -31,13 +31,15 @@ import {
   GraduationCap,
   Truck,
   Bike,
+  Store,
+  CreditCard,
 } from "lucide-react";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authFetch } from "../lib/api";
-import { isProductModuleEnabled, productConfig, type ProductModule } from "../lib/product-config";
+import { appProduct, isProductModuleEnabled, productConfig, type ProductModule } from "../lib/product-config";
 import InstallPWAButton from "../../components/InstallPWAButton";
 import TrialBanner from "../../components/TrialBanner";
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
@@ -240,6 +242,197 @@ export default function DashboardPage() {
     (isSuperAdmin && !userData?.company_id ? "Illimité" : userData?.subscription_status) ||
     "";
 
+  const businessTypeLabel = String(companyIdentity?.business_type || "").trim();
+  const businessTypeNormalized = businessTypeLabel
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const moduleCategories: Array<{
+    key: string;
+    title: string;
+    cards: Array<{ href: string; title: string; description: string; icon: any; show: boolean }>;
+  }> = [
+    {
+      key: "education",
+      title: "École / Éducation",
+      cards: [
+        {
+          href: "/education",
+          title: "Éducation",
+          description: "Écoles, élèves, classes, présences, notes et paiements scolaires.",
+          icon: GraduationCap,
+          show: moduleEnabled("education"),
+        },
+      ],
+    },
+    {
+      key: "commerce",
+      title: "Commerce / Marketplace",
+      cards: [
+        {
+          href: "/marketplace",
+          title: "Marketplace",
+          description: "Vendez et achetez sur la marketplace multi-vendeurs MaliLink.",
+          icon: Store,
+          show: moduleEnabled("marketplace"),
+        },
+        {
+          href: "/pos",
+          title: "POS / Caisse",
+          description: "Caisse rapide, ventes, tickets et paiements en boutique.",
+          icon: CreditCard,
+          show: canUsePos && moduleEnabled("pos"),
+        },
+        {
+          href: "/produits",
+          title: "Produits",
+          description: "Catalogue produits, prix, stocks et codes-barres.",
+          icon: Boxes,
+          show: moduleEnabled("produits"),
+        },
+      ],
+    },
+    {
+      key: "livraison",
+      title: "Livraison",
+      cards: [
+        {
+          href: "/client/livraison",
+          title: "Livraison client",
+          description: "Demander une livraison, suivre une commande et calculer les frais.",
+          icon: Package,
+          show: moduleEnabled("livraison"),
+        },
+        {
+          href: "/livreur",
+          title: "Espace livreur",
+          description: "Tableau de bord des livreurs, missions, revenus et statut.",
+          icon: Truck,
+          show: moduleEnabled("livraison"),
+        },
+        {
+          href: "/livreur/inscription",
+          title: "Inscription livreur",
+          description: "Devenir livreur, coursier ou taxi partenaire MaliLink.",
+          icon: Bike,
+          show: moduleEnabled("livraison"),
+        },
+      ],
+    },
+    {
+      key: "restaurant",
+      title: "Restaurant",
+      cards: [
+        {
+          href: "/restaurant",
+          title: "Restaurant",
+          description: "Menus, commandes, tables et livraison de repas.",
+          icon: Utensils,
+          show: moduleEnabled("restaurant"),
+        },
+      ],
+    },
+    {
+      key: "immobilier",
+      title: "Hôtel / Immobilier",
+      cards: [
+        {
+          href: "/immobilier",
+          title: "Immobilier / Hôtel",
+          description: "Biens, locations, ventes, réservations et gestion hôtelière.",
+          icon: Building2,
+          show: moduleEnabled("immobilier") || moduleEnabled("hotel"),
+        },
+      ],
+    },
+    {
+      key: "automobile",
+      title: "Automobile",
+      cards: [
+        {
+          href: "/automobile",
+          title: "Automobile",
+          description: "Véhicules, ventes, locations et gestion de garage.",
+          icon: Car,
+          show: moduleEnabled("automobile"),
+        },
+      ],
+    },
+    {
+      key: "laboratoire",
+      title: "Laboratoire",
+      cards: [
+        {
+          href: "/laboratoire",
+          title: "Laboratoire",
+          description: "Analyses, rendez-vous, patients et résultats en ligne.",
+          icon: FlaskConical,
+          show: moduleEnabled("laboratoire"),
+        },
+      ],
+    },
+    {
+      key: "gestion",
+      title: "Comptabilité / Gestion",
+      cards: [
+        {
+          href: "/comptabilite",
+          title: "Comptabilité",
+          description: "Factures, dépenses, trésorerie et paie.",
+          icon: Calculator,
+          show: canViewAccounting && moduleEnabled("comptabilite"),
+        },
+        {
+          href: "/rapports",
+          title: "Rapports",
+          description: "Rapports d'activité, ventes et performances.",
+          icon: BarChart3,
+          show: canViewDirectionModules && moduleEnabled("rapports"),
+        },
+      ],
+    },
+    {
+      key: "ia",
+      title: "Assistant IA",
+      cards: [
+        {
+          href: "/assistant",
+          title: "Assistant IA",
+          description: "Assistant intelligent pour vos ventes, stocks et décisions.",
+          icon: Bot,
+          show: moduleEnabled("ia"),
+        },
+      ],
+    },
+  ];
+
+  const businessTypePriorities: Array<{ match: string[]; order: string[] }> = [
+    { match: ["ecole", "education", "universite", "institut", "formation"], order: ["education", "ia", "gestion"] },
+    { match: ["restaurant", "restauration", "cafe", "maquis"], order: ["restaurant", "commerce", "livraison"] },
+    { match: ["laboratoire", "labo", "sante", "clinique", "pharmacie"], order: ["laboratoire", "ia", "gestion"] },
+    { match: ["automobile", "auto", "garage", "vehicule", "voiture"], order: ["automobile", "commerce", "gestion"] },
+    { match: ["immobilier", "hotel", "residence", "agence immobiliere"], order: ["immobilier", "commerce", "gestion"] },
+    { match: ["logistique", "transport", "livraison", "coursier"], order: ["livraison", "commerce", "gestion"] },
+    { match: ["b2b", "grossiste", "fournisseur", "distribution"], order: ["commerce", "gestion", "livraison"] },
+    { match: ["commerce", "boutique", "magasin", "vente", "shop"], order: ["commerce", "livraison", "gestion"] },
+    { match: ["service"], order: ["ia", "commerce", "gestion"] },
+  ];
+
+  const matchedPriority = businessTypeNormalized
+    ? businessTypePriorities.find(({ match }) => match.some((keyword) => businessTypeNormalized.includes(keyword)))
+    : undefined;
+  const priorityOrder = matchedPriority?.order || [];
+  const orderedCategoryKeys = [
+    ...priorityOrder,
+    ...moduleCategories.map((category) => category.key).filter((key) => !priorityOrder.includes(key)),
+  ];
+  const orderedCategories = orderedCategoryKeys
+    .map((key) => moduleCategories.find((category) => category.key === key))
+    .filter((category): category is (typeof moduleCategories)[number] => Boolean(category))
+    .map((category) => ({ ...category, cards: category.cards.filter((card) => card.show) }))
+    .filter((category) => category.cards.length > 0);
+
   return (
     <div className="min-h-screen flex bg-gray-100">
       <aside className="w-64 bg-black text-white p-6 overflow-y-auto">
@@ -286,18 +479,27 @@ export default function DashboardPage() {
     <Link href="/education">
       <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
         <GraduationCap size={20} />
-        Education
+        Éducation
       </li>
     </Link>
   )}
 
   {moduleEnabled("livraison") && (
-    <Link href="/livreur">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Truck size={20} />
-        Espace livreur
-      </li>
-    </Link>
+    <>
+      <Link href="/client/livraison">
+        <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+          <Package size={20} />
+          Livraison client
+        </li>
+      </Link>
+
+      <Link href="/livreur">
+        <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+          <Truck size={20} />
+          Espace livreur
+        </li>
+      </Link>
+    </>
   )}
 
   {isSuperAdmin && (
@@ -568,7 +770,7 @@ export default function DashboardPage() {
 </ul>
       </aside>
 
-    <main className="flex-1 p-8">
+    <main className="flex-1 p-4 md:p-8">
   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
     <h1 className="text-4xl font-bold text-black">
       Tableau de bord
@@ -623,10 +825,12 @@ export default function DashboardPage() {
   )}
 
   <p className="text-gray-500 mt-2 mb-8">
-    Vue globale graphique des opérations logistiques en temps réel.
+    {appProduct === "malilink"
+      ? "Vue globale de votre activité MaliLink en temps réel."
+      : "Vue globale graphique des opérations logistiques en temps réel."}
   </p>
 
-        <div className="grid grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 xl:grid-cols-5 mb-8">
           <StatCard title="Produits" value={stats.total_produits} color="text-blue-500" />
           <StatCard title="Stock total" value={stats.total_stock || 0} color="text-yellow-600" />
           <StatCard title="Entrepôts" value={stats.total_entrepots} color="text-green-500" />
@@ -634,7 +838,7 @@ export default function DashboardPage() {
           <StatCard title="Commandes" value={stats.total_commandes || stats.total_orders || 0} color="text-indigo-600" />
         </div>
 
-        <div className="grid grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 xl:grid-cols-5 mb-8">
           <StatCard title="Alertes" value={stats.alertes} color="text-red-500" />
           <StatCard title="Utilisateurs" value={stats.total_utilisateurs || 0} color="text-black" />
           <StatCard title="Inventaires" value={stats.total_inventaires || 0} color="text-purple-600" />
@@ -642,57 +846,48 @@ export default function DashboardPage() {
           <StatCard title="Rupture stock" value={stats.rupture_stock} color="text-red-600" />
         </div>
 
-        {(moduleEnabled("education") || moduleEnabled("livraison")) && (
+        {appProduct === "malilink" && orderedCategories.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-black">Modules MaliLink</h2>
-            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {moduleEnabled("education") && (
-                <Link href="/education" className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
-                    <GraduationCap size={26} />
-                  </div>
-                  <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">Education</p>
-                  <p className="text-sm text-gray-500">
-                    Gestion des écoles, élèves, classes, présences, notes et paiements scolaires.
-                  </p>
-                </Link>
-              )}
-              {moduleEnabled("livraison") && (
-                <>
-                  <Link href="/client/livraison" className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
-                      <Package size={26} />
-                    </div>
-                    <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">Livraison client</p>
-                    <p className="text-sm text-gray-500">
-                      Demander une livraison, suivre une commande et calculer les frais.
-                    </p>
-                  </Link>
-                  <Link href="/livreur" className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
-                      <Truck size={26} />
-                    </div>
-                    <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">Espace livreur</p>
-                    <p className="text-sm text-gray-500">
-                      Tableau de bord des livreurs, missions, revenus et statut.
-                    </p>
-                  </Link>
-                  <Link href="/livreur/inscription" className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
-                      <Bike size={26} />
-                    </div>
-                    <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">Inscription livreur</p>
-                    <p className="text-sm text-gray-500">
-                      Formulaire d&apos;inscription pour devenir livreur MaliLink.
-                    </p>
-                  </Link>
-                </>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-2xl font-bold text-black">Modules MaliLink</h2>
+              {businessTypeLabel && (
+                <span className="rounded-full bg-yellow-500 px-4 py-1 text-sm font-bold text-black">
+                  {businessTypeLabel}
+                </span>
               )}
             </div>
+            {orderedCategories.map((category, categoryIndex) => (
+              <div key={category.key} className="mt-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="h-6 w-1.5 rounded-full bg-yellow-500" aria-hidden="true" />
+                  <h3 className="text-lg font-bold text-black">{category.title}</h3>
+                  {categoryIndex === 0 && matchedPriority && (
+                    <span className="rounded-full border border-yellow-500 bg-yellow-50 px-3 py-0.5 text-xs font-semibold text-yellow-700">
+                      Prioritaire pour votre activité
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  {category.cards.map((card) => (
+                    <Link
+                      key={card.href}
+                      href={card.href}
+                      className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
+                        <card.icon size={26} />
+                      </div>
+                      <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">{card.title}</p>
+                      <p className="text-sm text-gray-500">{card.description}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
           <ChartCard title="Vue générale du système">
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={overviewData}>
@@ -724,7 +919,7 @@ export default function DashboardPage() {
           </ChartCard>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
           <ChartCard title="Quantités des derniers mouvements">
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={movementData}>
@@ -787,7 +982,7 @@ export default function DashboardPage() {
           href="/assistant"
           className="fixed bottom-6 right-6 bg-black text-white px-5 py-4 rounded-full shadow-2xl font-bold hover:scale-105 transition z-50"
         >
-          🤖 Triangle IA
+          🤖 {appProduct === "malilink" ? "MaliLink IA" : "Triangle IA"}
         </a>
         <div className="fixed bottom-24 right-6 z-50">
           <WhatsAppSupportButton className="shadow-2xl" label="Support" />
