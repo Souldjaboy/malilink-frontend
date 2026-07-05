@@ -30,7 +30,9 @@ export type ProductModule =
   | "logistique"
   | "reservations"
   | "profil_patient"
-  | "profils_vendeurs";
+  | "profils_vendeurs"
+  | "livraison"
+  | "education";
 
 type ProductTheme = {
   primary: string;
@@ -100,6 +102,8 @@ const baseModules: Record<ProductModule, boolean> = {
   reservations: false,
   profil_patient: false,
   profils_vendeurs: false,
+  livraison: false,
+  education: false,
 };
 
 const configs: Record<AppProduct, ProductConfig> = {
@@ -143,7 +147,7 @@ const configs: Record<AppProduct, ProductConfig> = {
       demandes: true,
       logistique: true,
     },
-    disabledRoutePrefixes: ["/marketplace", "/client", "/vendor", "/register"],
+    disabledRoutePrefixes: ["/marketplace", "/client", "/vendor", "/register", "/livreur", "/education"],
     allowedRoutePrefixes: [],
     publicHomeActions: ["/login", "/installer-application", "/solutions", "/contact"],
     marketplaceEnabled: false,
@@ -193,6 +197,8 @@ const configs: Record<AppProduct, ProductConfig> = {
       chat: true,
       reservations: true,
       profils_vendeurs: true,
+      livraison: true,
+      education: true,
     },
     disabledRoutePrefixes: [],
     allowedRoutePrefixes: [],
@@ -340,6 +346,8 @@ const routeModuleRules: Array<{ prefixes: string[]; module: ProductModule }> = [
   { prefixes: ["/chat"], module: "chat" },
   { prefixes: ["/demandes"], module: "demandes" },
   { prefixes: ["/activites"], module: "logistique" },
+  { prefixes: ["/livreur", "/client/livraison"], module: "livraison" },
+  { prefixes: ["/education"], module: "education" },
 ];
 
 export function isRouteAvailable(pathname: string) {

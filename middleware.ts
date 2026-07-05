@@ -27,6 +27,7 @@ const protectedRoutes = [
   "/pointage",
   "/parametres-pointage",
   "/parametres",
+  "/education",
 ];
 
 const protectedClientRoutes = [
@@ -38,6 +39,8 @@ const protectedClientRoutes = [
   "/marketplace/cart",
   "/marketplace/checkout",
   "/marketplace/orders",
+  "/livreur",
+  "/client/livraison",
 ];
 
 const moduleRouteMap: Record<string, string> = {
