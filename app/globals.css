@@ -26,129 +26,125 @@ html[data-product="hafiya"] {
 
 /*
   Mode sombre désactivé volontairement (Phase 0) :
-  l'interface n'est pas encore conçue pour le mode sombre et
   l'ancien override `prefers-color-scheme: dark` rendait des textes
-  invisibles (fond sombre + textes forcés en couleurs claires/foncées mixtes).
-  Un vrai thème sombre sera conçu dans la phase design system.
+  invisibles. Un vrai thème sombre sera conçu avec le design system.
 */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans, Arial), Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ================================
-   MALILINK GLOBAL MODERN THEME
-   Scopé au produit malilink uniquement :
+/* ============================================================
+   MALILINK GLOBAL — IDENTITÉ PREMIUM
+   Bleu nuit profond + or raffiné. Scopé au produit malilink :
    ne touche ni Triangle WMS ni HAFIYA.
-================================ */
+============================================================ */
 
 html[data-product="malilink"] {
-  --ml-blue: #071b38;
-  --ml-blue-2: #002e5e;
-  --ml-gold: #d4af37;
-  --ml-gold-light: #f8d36a;
+  /* Palette */
+  --ml-blue: #0a1c3a;          /* bleu nuit principal */
+  --ml-blue-deep: #060f22;     /* fond sidebar bas */
+  --ml-blue-2: #123262;        /* bleu secondaire / hover */
+  --ml-gold: #d4a72c;          /* or principal (contraste AA sur bleu) */
+  --ml-gold-light: #f3cf5d;
+  --ml-gold-deep: #b8901f;
   --ml-white: #ffffff;
-  --ml-soft: #f6f8fb;
+  --ml-soft: #f4f6fa;          /* fond de page */
+  --ml-card: #ffffff;
+  --ml-border: #e3e9f2;
+  --ml-text: #10233f;          /* texte principal (contraste 12:1 sur blanc) */
+  --ml-text-soft: #516479;
+  --ml-success: #15803d;
+  --ml-danger: #b91c1c;
+  --ml-radius: 16px;
 }
 
 html[data-product="malilink"] body {
   background: var(--ml-soft);
-  color: #071b38;
+  color: var(--ml-text);
 }
 
-/* Boutons jaune marbré */
-html[data-product="malilink"] button,
-html[data-product="malilink"] a[href="/login"],
-html[data-product="malilink"] a[href="/dashboard"],
+/* --- Titres : hiérarchie nette --- */
+html[data-product="malilink"] h1,
+html[data-product="malilink"] h2,
+html[data-product="malilink"] h3 {
+  color: var(--ml-blue);
+  letter-spacing: -0.015em;
+}
+
+/* --- Liens lisibles --- */
+html[data-product="malilink"] a {
+  color: var(--ml-blue-2);
+}
+
+/* --- Boutons : or marbré réservé aux CTA (jaune/amber du markup),
+       les autres boutons gardent leurs couleurs sémantiques
+       (rouge = danger, vert = succès, bleu = info) --- */
 html[data-product="malilink"] .bg-yellow-500,
 html[data-product="malilink"] .bg-yellow-600,
+html[data-product="malilink"] .bg-yellow-400,
+html[data-product="malilink"] .bg-yellow-300,
 html[data-product="malilink"] .bg-amber-500,
-html[data-product="malilink"] .bg-orange-500 {
-  background:
-    linear-gradient(135deg, #f8d36a 0%, #d4af37 35%, #fff1a8 55%, #c99a27 100%);
-  color: #071b38;
+html[data-product="malilink"] .bg-orange-500,
+html[data-product="malilink"] a[href="/login"],
+html[data-product="malilink"] a[href="/dashboard"] {
+  background: linear-gradient(135deg, #f3cf5d 0%, #d4a72c 40%, #f7dc7e 60%, #b8901f 100%);
+  color: #081428;
   border: none;
-  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.25);
+  box-shadow: 0 6px 18px rgba(184, 144, 31, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
-/* Sidebar bleu nuit */
+html[data-product="malilink"] .bg-yellow-500:hover,
+html[data-product="malilink"] .bg-yellow-600:hover,
+html[data-product="malilink"] .bg-yellow-400:hover,
+html[data-product="malilink"] .bg-amber-500:hover,
+html[data-product="malilink"] .bg-orange-500:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 8px 22px rgba(184, 144, 31, 0.38);
+  transform: translateY(-1px);
+}
+
+html[data-product="malilink"] button {
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease, background-color 0.15s ease;
+}
+
+html[data-product="malilink"] button:active {
+  transform: translateY(0) scale(0.99);
+}
+
+html[data-product="malilink"] button:disabled {
+  filter: grayscale(0.4);
+  cursor: not-allowed;
+}
+
+/* --- Accessibilité : focus toujours visible --- */
+html[data-product="malilink"] a:focus-visible,
+html[data-product="malilink"] button:focus-visible,
+html[data-product="malilink"] input:focus-visible,
+html[data-product="malilink"] select:focus-visible,
+html[data-product="malilink"] textarea:focus-visible {
+  outline: 3px solid rgba(212, 167, 44, 0.6);
+  outline-offset: 2px;
+}
+
+/* --- Sidebar bleu nuit + reflet or --- */
 html[data-product="malilink"] aside,
 html[data-product="malilink"] [class*="sidebar"],
 html[data-product="malilink"] .bg-black,
 html[data-product="malilink"] .bg-gray-900,
 html[data-product="malilink"] .bg-slate-900 {
   background:
-    radial-gradient(circle at top left, rgba(212, 175, 55, 0.16), transparent 30%),
-    linear-gradient(180deg, #071b38 0%, #031024 100%);
+    radial-gradient(circle at top left, rgba(212, 167, 44, 0.14), transparent 32%),
+    linear-gradient(180deg, var(--ml-blue) 0%, var(--ml-blue-deep) 100%);
   color: #ffffff;
 }
 
-/* Cartes modernes */
-html[data-product="malilink"] .card,
-html[data-product="malilink"] .rounded-2xl,
-html[data-product="malilink"] .rounded-xl,
-html[data-product="malilink"] .shadow,
-html[data-product="malilink"] [class*="shadow"] {
-  border-radius: 18px;
-}
-
-/* Inputs propres */
-html[data-product="malilink"] input,
-html[data-product="malilink"] select,
-html[data-product="malilink"] textarea {
-  border-radius: 12px;
-  border: 1px solid #d9e2ef;
-  background: #ffffff;
-  color: #071b38;
-}
-
-/* Titres */
-html[data-product="malilink"] h1,
-html[data-product="malilink"] h2,
-html[data-product="malilink"] h3 {
-  color: #071b38;
-}
-
-/* Sur fond sombre (sidebar), les titres restent lisibles */
-html[data-product="malilink"] aside h1,
-html[data-product="malilink"] aside h2,
-html[data-product="malilink"] aside h3 {
-  color: #ffffff;
-}
-
-/* Remplacement des logos des autres produits sur le build MaliLink */
-html[data-product="malilink"] img[src*="triangle"],
-html[data-product="malilink"] img[src*="hafiya"] {
-  content: url("/malilink-logo.jpg");
-}
-
-/* Page login */
-html[data-product="malilink"] .login-page,
-html[data-product="malilink"] form {
-  border-radius: 24px;
-}
-
-/* Couleur liens (hors zones sombres) */
-html[data-product="malilink"] a {
-  color: #071b38;
-}
-
-/* Badge actif menu */
-html[data-product="malilink"] [aria-current="page"],
-html[data-product="malilink"] .active,
-html[data-product="malilink"] .bg-yellow-400,
-html[data-product="malilink"] .bg-yellow-300 {
-  background: linear-gradient(135deg, #f8d36a, #d4af37, #fff1a8);
-  color: #071b38;
-}
-
-/* ===== Sidebar : texte toujours lisible sur fond bleu nuit =====
-   Correction du bug "texte invisible" : l'ancienne règle forçait
-   `nav * { color: white }` sur TOUTES les navs, y compris celles
-   à fond clair. Ici, le blanc n'est forcé que dans les zones
-   réellement sombres (aside + navs à fond sombre). */
+/* Texte blanc UNIQUEMENT dans les zones réellement sombres
+   (l'ancien `nav * { white }` global rendait les navs claires illisibles) */
 html[data-product="malilink"] aside,
 html[data-product="malilink"] aside a,
 html[data-product="malilink"] aside button,
@@ -164,24 +160,38 @@ html[data-product="malilink"] nav.bg-slate-900 * {
   color: #ffffff;
 }
 
+html[data-product="malilink"] aside h1,
+html[data-product="malilink"] aside h2,
+html[data-product="malilink"] aside h3 {
+  color: #ffffff;
+}
+
 html[data-product="malilink"] aside button {
   background: transparent;
   box-shadow: none;
 }
 
-html[data-product="malilink"] aside a:hover,
-html[data-product="malilink"] aside button:hover {
-  color: #f8d36a;
+html[data-product="malilink"] aside a,
+html[data-product="malilink"] aside button {
+  border-radius: 12px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+html[data-product="malilink"] aside a:hover,
+html[data-product="malilink"] aside button:hover {
+  color: var(--ml-gold-light);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Élément actif du menu : or, texte bleu nuit */
 html[data-product="malilink"] aside .active,
 html[data-product="malilink"] aside [aria-current="page"],
 html[data-product="malilink"] aside a.bg-yellow-500,
 html[data-product="malilink"] aside a.bg-yellow-400,
 html[data-product="malilink"] aside button.bg-yellow-500,
 html[data-product="malilink"] aside button.bg-yellow-400 {
-  background: linear-gradient(135deg, #f8d36a, #d4af37, #fff1a8, #c99a27);
-  color: #071b38;
+  background: linear-gradient(135deg, var(--ml-gold-light), var(--ml-gold), #f7dc7e, var(--ml-gold-deep));
+  color: #081428;
 }
 
 html[data-product="malilink"] aside .active *,
@@ -190,7 +200,94 @@ html[data-product="malilink"] aside a.bg-yellow-500 *,
 html[data-product="malilink"] aside a.bg-yellow-400 *,
 html[data-product="malilink"] aside button.bg-yellow-500 *,
 html[data-product="malilink"] aside button.bg-yellow-400 * {
-  color: #071b38;
+  color: #081428;
+}
+
+/* --- Badge actif hors sidebar --- */
+html[data-product="malilink"] [aria-current="page"],
+html[data-product="malilink"] .active {
+  color: #081428;
+}
+
+/* --- Cartes : bordure fine + ombre douce --- */
+html[data-product="malilink"] .card,
+html[data-product="malilink"] .rounded-2xl,
+html[data-product="malilink"] .rounded-3xl {
+  border-radius: var(--ml-radius);
+}
+
+html[data-product="malilink"] .shadow,
+html[data-product="malilink"] .shadow-sm,
+html[data-product="malilink"] .shadow-md,
+html[data-product="malilink"] .shadow-lg {
+  box-shadow: 0 1px 2px rgba(10, 28, 58, 0.05), 0 8px 24px rgba(10, 28, 58, 0.07);
+  border: 1px solid var(--ml-border);
+}
+
+/* --- Formulaires propres et lisibles --- */
+html[data-product="malilink"] input,
+html[data-product="malilink"] select,
+html[data-product="malilink"] textarea {
+  border-radius: 12px;
+  border: 1px solid #cfd9e8;
+  background: #ffffff;
+  color: var(--ml-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+html[data-product="malilink"] input::placeholder,
+html[data-product="malilink"] textarea::placeholder {
+  color: #7d8ba1;
+}
+
+html[data-product="malilink"] input:focus,
+html[data-product="malilink"] select:focus,
+html[data-product="malilink"] textarea:focus {
+  border-color: var(--ml-gold);
+  box-shadow: 0 0 0 3px rgba(212, 167, 44, 0.18);
+}
+
+/* --- Tableaux lisibles --- */
+html[data-product="malilink"] table {
+  border-collapse: collapse;
+}
+
+html[data-product="malilink"] thead th {
+  color: var(--ml-blue);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+html[data-product="malilink"] tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+html[data-product="malilink"] tbody tr:hover {
+  background: #f0f4fa;
+}
+
+/* --- Remplacement des logos des autres produits sur le build MaliLink --- */
+html[data-product="malilink"] img[src*="triangle"],
+html[data-product="malilink"] img[src*="hafiya"] {
+  content: url("/malilink-logo.jpg");
+}
+
+/* --- Scrollbar discrète --- */
+html[data-product="malilink"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html[data-product="malilink"] ::-webkit-scrollbar-thumb {
+  background: #c3cede;
+  border-radius: 8px;
+  border: 2px solid var(--ml-soft);
+}
+
+html[data-product="malilink"] ::-webkit-scrollbar-thumb:hover {
+  background: #9fb0c9;
 }
 
 .malilink-logo-img {
