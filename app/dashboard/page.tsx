@@ -28,6 +28,9 @@ import {
   ClipboardCheck,
   Settings,
   LogOut,
+  GraduationCap,
+  Truck,
+  Bike,
 } from "lucide-react";
 
 import Link from "next/link";
@@ -215,6 +218,8 @@ export default function DashboardPage() {
     alertes: "notifications",
     chat: "chat",
     activites: "logistique",
+    education: "education",
+    livraison: "livraison",
   };
   const moduleEnabled = (key: string) => {
     const productModule = productModuleByDashboardKey[key];
@@ -273,6 +278,24 @@ export default function DashboardPage() {
       <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
         <Bot size={20} />
         Assistant IA
+      </li>
+    </Link>
+  )}
+
+  {moduleEnabled("education") && (
+    <Link href="/education">
+      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+        <GraduationCap size={20} />
+        Education
+      </li>
+    </Link>
+  )}
+
+  {moduleEnabled("livraison") && (
+    <Link href="/livreur">
+      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+        <Truck size={20} />
+        Espace livreur
       </li>
     </Link>
   )}
@@ -618,6 +641,56 @@ export default function DashboardPage() {
           <StatCard title="Stock faible" value={stats.stock_faible} color="text-orange-500" />
           <StatCard title="Rupture stock" value={stats.rupture_stock} color="text-red-600" />
         </div>
+
+        {(moduleEnabled("education") || moduleEnabled("livraison")) && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-black">Modules MaliLink</h2>
+            <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {moduleEnabled("education") && (
+                <Link href="/education" className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
+                    <GraduationCap size={26} />
+                  </div>
+                  <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">Education</p>
+                  <p className="text-sm text-gray-500">
+                    Gestion des écoles, élèves, classes, présences, notes et paiements scolaires.
+                  </p>
+                </Link>
+              )}
+              {moduleEnabled("livraison") && (
+                <>
+                  <Link href="/client/livraison" className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
+                      <Package size={26} />
+                    </div>
+                    <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">Livraison client</p>
+                    <p className="text-sm text-gray-500">
+                      Demander une livraison, suivre une commande et calculer les frais.
+                    </p>
+                  </Link>
+                  <Link href="/livreur" className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
+                      <Truck size={26} />
+                    </div>
+                    <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">Espace livreur</p>
+                    <p className="text-sm text-gray-500">
+                      Tableau de bord des livreurs, missions, revenus et statut.
+                    </p>
+                  </Link>
+                  <Link href="/livreur/inscription" className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
+                      <Bike size={26} />
+                    </div>
+                    <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">Inscription livreur</p>
+                    <p className="text-sm text-gray-500">
+                      Formulaire d&apos;inscription pour devenir livreur MaliLink.
+                    </p>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-6 mb-8">
           <ChartCard title="Vue générale du système">
