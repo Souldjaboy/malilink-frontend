@@ -40,6 +40,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authFetch } from "../lib/api";
 import { appProduct, isProductModuleEnabled, productConfig, type ProductModule } from "../lib/product-config";
+import AIChatWidget from "../components/AIChatWidget";
 import InstallPWAButton from "../../components/InstallPWAButton";
 import TrialBanner from "../../components/TrialBanner";
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
@@ -978,12 +979,24 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <a
-          href="/assistant"
-          className="fixed bottom-6 right-6 bg-black text-white px-5 py-4 rounded-full shadow-2xl font-bold hover:scale-105 transition z-50"
-        >
-          🤖 {appProduct === "malilink" ? "MaliLink IA" : "Triangle IA"}
-        </a>
+        {appProduct === "malilink" ? (
+          <AIChatWidget
+            space="business_dashboard"
+            suggestions={[
+              "Résume mes ventes aujourd’hui",
+              "Quelles commandes sont en attente ?",
+              "Aide-moi à suivre mes livraisons",
+              "Explique-moi comment utiliser MaliLink",
+            ]}
+          />
+        ) : (
+          <a
+            href="/assistant"
+            className="fixed bottom-6 right-6 bg-black text-white px-5 py-4 rounded-full shadow-2xl font-bold hover:scale-105 transition z-50"
+          >
+            🤖 Triangle IA
+          </a>
+        )}
         <div className="fixed bottom-24 right-6 z-50">
           <WhatsAppSupportButton className="shadow-2xl" label="Support" />
         </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetch } from "../lib/api";
 import { formatFCFA } from "../lib/format";
+import AIChatWidget from "../components/AIChatWidget";
 
 type Dashboard = {
   total_students: number;
@@ -98,6 +99,15 @@ export default function EducationHomePage() {
           </section>
         )}
       </div>
+
+      <AIChatWidget
+        space="education"
+        suggestions={[
+          "Aide-moi à gérer mon école",
+          "Combien d’élèves sont présents aujourd’hui ?",
+          "Explique-moi le module Éducation",
+        ]}
+      />
     </div>
   );
 }

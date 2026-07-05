@@ -1,8 +1,72 @@
 "use client";
 
 import { useState } from "react";
+import { Bot, GraduationCap, Package, ShoppingCart, Sparkles } from "lucide-react";
+import { AIChatPanel } from "../components/AIChatWidget";
+import { appProduct } from "../lib/product-config";
 
-export default function AssistantPage() {
+const MALILINK_EXAMPLES = [
+  "Résume mes ventes aujourd’hui",
+  "Quels produits se vendent le plus ?",
+  "Aide-moi à suivre mes livraisons",
+  "Explique-moi comment utiliser MaliLink",
+  "Quelles commandes sont en attente ?",
+  "Aide-moi à gérer mon école",
+  "Aide-moi à comprendre ma mission de livraison",
+];
+
+function MaliLinkAssistantPage() {
+  return (
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
+      <div className="mx-auto max-w-5xl">
+        <div className="rounded-3xl bg-[#0a1c3a] p-6 text-white shadow md:p-8">
+          <div className="flex items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-500 text-black">
+              <Bot size={28} />
+            </span>
+            <div>
+              <h1 className="text-2xl font-black text-white md:text-3xl">Assistant IA MaliLink</h1>
+              <p className="text-sm text-yellow-400">Réponses en français, adaptées à votre espace et à votre rôle</p>
+            </div>
+          </div>
+          <p className="mt-4 max-w-3xl text-white/80">
+            Posez vos questions sur vos ventes, vos commandes marketplace, vos livraisons, votre
+            école ou le fonctionnement de MaliLink. L’assistant n’accède qu’aux données autorisées
+            pour votre compte.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="flex items-center gap-2 rounded-xl bg-white/10 p-3 text-sm">
+              <ShoppingCart size={18} className="shrink-0 text-yellow-400" />
+              Ventes, commandes et marketplace
+            </div>
+            <div className="flex items-center gap-2 rounded-xl bg-white/10 p-3 text-sm">
+              <Package size={18} className="shrink-0 text-yellow-400" />
+              Livraisons et missions livreur
+            </div>
+            <div className="flex items-center gap-2 rounded-xl bg-white/10 p-3 text-sm">
+              <GraduationCap size={18} className="shrink-0 text-yellow-400" />
+              École : élèves, notes, présences
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-3xl bg-white shadow">
+          <div className="flex items-center gap-2 border-b border-gray-200 px-5 py-4">
+            <Sparkles size={18} className="text-yellow-600" />
+            <h2 className="text-lg font-black text-black">Discussion</h2>
+          </div>
+          <AIChatPanel
+            space="business_dashboard"
+            suggestions={MALILINK_EXAMPLES}
+            heightClass="h-[min(600px,calc(100dvh-220px))]"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TriangleAssistantPage() {
   const [messages, setMessages] = useState<any[]>([
     {
       role: "assistant",
@@ -131,4 +195,11 @@ export default function AssistantPage() {
       </div>
     </div>
   );
+}
+
+export default function AssistantPage() {
+  if (appProduct === "malilink") {
+    return <MaliLinkAssistantPage />;
+  }
+  return <TriangleAssistantPage />;
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetch } from "../lib/api";
 import { formatFCFA } from "../lib/format";
+import AIChatWidget from "../components/AIChatWidget";
 
 type Driver = {
   id: number;
@@ -245,6 +246,15 @@ export default function LivreurDashboardPage() {
           </div>
         </section>
       </div>
+
+      <AIChatWidget
+        space="delivery_driver"
+        suggestions={[
+          "Aide-moi à comprendre ma mission de livraison",
+          "Combien ai-je gagné ?",
+          "Comment me rendre disponible ?",
+        ]}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "../../lib/api";
 import { formatFCFA } from "../../lib/format";
+import AIChatWidget from "../../components/AIChatWidget";
 
 type Mission = {
   id: number;
@@ -238,6 +239,15 @@ export default function ClientLivraisonPage() {
           </div>
         </section>
       </div>
+
+      <AIChatWidget
+        space="delivery_client"
+        suggestions={[
+          "Aide-moi à suivre mes livraisons",
+          "Comment sont calculés les frais ?",
+          "Où en est ma dernière commande ?",
+        ]}
+      />
     </div>
   );
 }
