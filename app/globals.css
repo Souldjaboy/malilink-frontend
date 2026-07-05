@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --product-primary: #050505;
+  --product-accent: #f5b400;
+}
+
+html[data-product="malilink"] {
+  --product-primary: #07152f;
+  --product-accent: #f5b400;
+}
+
+html[data-product="hafiya"] {
+  --product-primary: #0f7a55;
+  --product-accent: #22c55e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/*
+  Mode sombre désactivé volontairement (Phase 0) :
+  l'interface n'est pas encore conçue pour le mode sombre et
+  l'ancien override `prefers-color-scheme: dark` rendait des textes
+  invisibles (fond sombre + textes forcés en couleurs claires/foncées mixtes).
+  Un vrai thème sombre sera conçu dans la phase design system.
+*/
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ================================
+   MALILINK GLOBAL MODERN THEME
+   Scopé au produit malilink uniquement :
+   ne touche ni Triangle WMS ni HAFIYA.
+================================ */
+
+html[data-product="malilink"] {
+  --ml-blue: #071b38;
+  --ml-blue-2: #002e5e;
+  --ml-gold: #d4af37;
+  --ml-gold-light: #f8d36a;
+  --ml-white: #ffffff;
+  --ml-soft: #f6f8fb;
+}
+
+html[data-product="malilink"] body {
+  background: var(--ml-soft);
+  color: #071b38;
+}
+
+/* Boutons jaune marbré */
+html[data-product="malilink"] button,
+html[data-product="malilink"] a[href="/login"],
+html[data-product="malilink"] a[href="/dashboard"],
+html[data-product="malilink"] .bg-yellow-500,
+html[data-product="malilink"] .bg-yellow-600,
+html[data-product="malilink"] .bg-amber-500,
+html[data-product="malilink"] .bg-orange-500 {
+  background:
+    linear-gradient(135deg, #f8d36a 0%, #d4af37 35%, #fff1a8 55%, #c99a27 100%);
+  color: #071b38;
+  border: none;
+  box-shadow: 0 10px 25px rgba(212, 175, 55, 0.25);
+}
+
+/* Sidebar bleu nuit */
+html[data-product="malilink"] aside,
+html[data-product="malilink"] [class*="sidebar"],
+html[data-product="malilink"] .bg-black,
+html[data-product="malilink"] .bg-gray-900,
+html[data-product="malilink"] .bg-slate-900 {
+  background:
+    radial-gradient(circle at top left, rgba(212, 175, 55, 0.16), transparent 30%),
+    linear-gradient(180deg, #071b38 0%, #031024 100%);
+  color: #ffffff;
+}
+
+/* Cartes modernes */
+html[data-product="malilink"] .card,
+html[data-product="malilink"] .rounded-2xl,
+html[data-product="malilink"] .rounded-xl,
+html[data-product="malilink"] .shadow,
+html[data-product="malilink"] [class*="shadow"] {
+  border-radius: 18px;
+}
+
+/* Inputs propres */
+html[data-product="malilink"] input,
+html[data-product="malilink"] select,
+html[data-product="malilink"] textarea {
+  border-radius: 12px;
+  border: 1px solid #d9e2ef;
+  background: #ffffff;
+  color: #071b38;
+}
+
+/* Titres */
+html[data-product="malilink"] h1,
+html[data-product="malilink"] h2,
+html[data-product="malilink"] h3 {
+  color: #071b38;
+}
+
+/* Sur fond sombre (sidebar), les titres restent lisibles */
+html[data-product="malilink"] aside h1,
+html[data-product="malilink"] aside h2,
+html[data-product="malilink"] aside h3 {
+  color: #ffffff;
+}
+
+/* Remplacement des logos des autres produits sur le build MaliLink */
+html[data-product="malilink"] img[src*="triangle"],
+html[data-product="malilink"] img[src*="hafiya"] {
+  content: url("/malilink-logo.jpg");
+}
+
+/* Page login */
+html[data-product="malilink"] .login-page,
+html[data-product="malilink"] form {
+  border-radius: 24px;
+}
+
+/* Couleur liens (hors zones sombres) */
+html[data-product="malilink"] a {
+  color: #071b38;
+}
+
+/* Badge actif menu */
+html[data-product="malilink"] [aria-current="page"],
+html[data-product="malilink"] .active,
+html[data-product="malilink"] .bg-yellow-400,
+html[data-product="malilink"] .bg-yellow-300 {
+  background: linear-gradient(135deg, #f8d36a, #d4af37, #fff1a8);
+  color: #071b38;
+}
+
+/* ===== Sidebar : texte toujours lisible sur fond bleu nuit =====
+   Correction du bug "texte invisible" : l'ancienne règle forçait
+   `nav * { color: white }` sur TOUTES les navs, y compris celles
+   à fond clair. Ici, le blanc n'est forcé que dans les zones
+   réellement sombres (aside + navs à fond sombre). */
+html[data-product="malilink"] aside,
+html[data-product="malilink"] aside a,
+html[data-product="malilink"] aside button,
+html[data-product="malilink"] aside span,
+html[data-product="malilink"] aside p,
+html[data-product="malilink"] aside div,
+html[data-product="malilink"] nav.bg-black,
+html[data-product="malilink"] nav.bg-black *,
+html[data-product="malilink"] nav.bg-gray-900,
+html[data-product="malilink"] nav.bg-gray-900 *,
+html[data-product="malilink"] nav.bg-slate-900,
+html[data-product="malilink"] nav.bg-slate-900 * {
+  color: #ffffff;
+}
+
+html[data-product="malilink"] aside button {
+  background: transparent;
+  box-shadow: none;
+}
+
+html[data-product="malilink"] aside a:hover,
+html[data-product="malilink"] aside button:hover {
+  color: #f8d36a;
+}
+
+html[data-product="malilink"] aside .active,
+html[data-product="malilink"] aside [aria-current="page"],
+html[data-product="malilink"] aside a.bg-yellow-500,
+html[data-product="malilink"] aside a.bg-yellow-400,
+html[data-product="malilink"] aside button.bg-yellow-500,
+html[data-product="malilink"] aside button.bg-yellow-400 {
+  background: linear-gradient(135deg, #f8d36a, #d4af37, #fff1a8, #c99a27);
+  color: #071b38;
+}
+
+html[data-product="malilink"] aside .active *,
+html[data-product="malilink"] aside [aria-current="page"] *,
+html[data-product="malilink"] aside a.bg-yellow-500 *,
+html[data-product="malilink"] aside a.bg-yellow-400 *,
+html[data-product="malilink"] aside button.bg-yellow-500 *,
+html[data-product="malilink"] aside button.bg-yellow-400 * {
+  color: #071b38;
+}
+
+.malilink-logo-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  object-fit: cover;
+}
