@@ -60,6 +60,11 @@ html[data-product="malilink"] {
   --ml-success: #15803d;
   --ml-danger: #b91c1c;
   --ml-radius: 16px;
+
+  /* Alias sémantiques (même source de vérité) */
+  --ml-navy: var(--ml-blue);
+  --ml-cream: var(--ml-soft);
+  --ml-muted: var(--ml-text-soft);
 }
 
 html[data-product="malilink"] body {

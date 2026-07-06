@@ -41,6 +41,7 @@ import { useRouter } from "next/navigation";
 import { authFetch } from "../lib/api";
 import { appProduct, isProductModuleEnabled, productConfig, type ProductModule } from "../lib/product-config";
 import AIChatWidget from "../components/AIChatWidget";
+import MaliLinkSidebar from "../components/MaliLinkSidebar";
 import InstallPWAButton from "../../components/InstallPWAButton";
 import TrialBanner from "../../components/TrialBanner";
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
@@ -121,6 +122,37 @@ export default function DashboardPage() {
       .then((data) => setCompanyIdentity(data || null))
       .catch(() => setCompanyIdentity(null));
   }, []);
+
+  // Indicateurs métier réels (MaliLink) : on interroge le dashboard du
+  // module correspondant au business_type de l'entreprise.
+  const [businessStats, setBusinessStats] = useState<any>(null);
+  useEffect(() => {
+    if (appProduct !== "malilink") return;
+    const raw = String(companyIdentity?.business_type || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    let kind = "";
+    if (raw.includes("ecole") || raw.includes("education")) kind = "education";
+    else if (raw.includes("restaurant")) kind = "restaurant";
+    else if (raw.includes("automobile") || raw.includes("garage") || raw.includes("auto")) kind = "automobile";
+    else if (raw.includes("immobilier") || raw.includes("hotel")) kind = "immobilier";
+    if (!kind) return;
+
+    const endpoints: Record<string, string> = {
+      education: "/education/dashboard",
+      restaurant: "/restaurant/dashboard",
+      automobile: "/automobile/dashboard",
+      immobilier: "/immobilier/dashboard",
+    };
+
+    authFetch(endpoints[kind], { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (data) setBusinessStats({ kind, data });
+      })
+      .catch(() => {});
+  }, [companyIdentity?.business_type]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -436,6 +468,21 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex bg-gray-100">
+      {appProduct === "malilink" ? (
+        <MaliLinkSidebar
+          companyName={displayCompanyName}
+          logoUrl={displayLogoUrl || undefined}
+          moduleEnabled={moduleEnabled}
+          isSuperAdmin={isSuperAdmin}
+          isAdminLike={isAdminLike}
+          canManageWarehouse={canManageWarehouse}
+          canViewDirectionModules={canViewDirectionModules}
+          canViewAccounting={canViewAccounting}
+          canUsePos={canUsePos}
+          isReadOnlyRole={isReadOnlyRole}
+          onLogout={handleLogout}
+        />
+      ) : (
       <aside className="w-64 bg-black text-white p-6 overflow-y-auto">
         <div className="mb-10 flex items-center gap-3">
           {displayLogoUrl ? (
@@ -770,8 +817,9 @@ export default function DashboardPage() {
 
 </ul>
       </aside>
+      )}
 
-    <main className="flex-1 p-4 md:p-8">
+    <main className={appProduct === "malilink" ? "flex-1 p-4 pt-20 md:p-8 lg:pt-8" : "flex-1 p-4 md:p-8"}>
   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
     <h1 className="text-4xl font-bold text-black">
       Tableau de bord
@@ -846,6 +894,49 @@ export default function DashboardPage() {
           <StatCard title="Stock faible" value={stats.stock_faible} color="text-orange-500" />
           <StatCard title="Rupture stock" value={stats.rupture_stock} color="text-red-600" />
         </div>
+
+        {appProduct === "malilink" && businessStats && (
+          <div className="mb-8">
+            <div className="flex items-center gap-3">
+              <span className="h-6 w-1.5 rounded-full bg-yellow-500" aria-hidden="true" />
+              <h2 className="text-2xl font-bold text-black">Indicateurs de votre activité</h2>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
+              {businessStats.kind === "education" && (
+                <>
+                  <StatCard title="Élèves actifs" value={businessStats.data.total_students} color="text-blue-600" />
+                  <StatCard title="Présents aujourd'hui" value={businessStats.data.today?.presents} color="text-green-600" />
+                  <StatCard title="Retards" value={businessStats.data.today?.retards} color="text-orange-500" />
+                  <StatCard title="Absents" value={businessStats.data.today?.absents} color="text-red-600" />
+                </>
+              )}
+              {businessStats.kind === "restaurant" && (
+                <>
+                  <StatCard title="Plats au menu" value={businessStats.data.menu?.total} color="text-blue-600" />
+                  <StatCard title="Commandes" value={businessStats.data.orders?.total} color="text-green-600" />
+                  <StatCard title="En préparation" value={businessStats.data.orders?.preparation} color="text-orange-500" />
+                  <StatCard title="Tables occupées" value={businessStats.data.tables?.occupees} color="text-purple-600" />
+                </>
+              )}
+              {businessStats.kind === "automobile" && (
+                <>
+                  <StatCard title="Véhicules" value={businessStats.data.vehicles?.total} color="text-blue-600" />
+                  <StatCard title="Disponibles" value={businessStats.data.vehicles?.disponibles} color="text-green-600" />
+                  <StatCard title="Loués" value={businessStats.data.vehicles?.loues} color="text-orange-500" />
+                  <StatCard title="Vendus" value={businessStats.data.vehicles?.vendus} color="text-purple-600" />
+                </>
+              )}
+              {businessStats.kind === "immobilier" && (
+                <>
+                  <StatCard title="Biens" value={businessStats.data.properties?.total} color="text-blue-600" />
+                  <StatCard title="Disponibles" value={businessStats.data.properties?.disponibles} color="text-green-600" />
+                  <StatCard title="Loués" value={businessStats.data.properties?.loues} color="text-orange-500" />
+                  <StatCard title="Réservations" value={businessStats.data.reservations?.total} color="text-purple-600" />
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {appProduct === "malilink" && orderedCategories.length > 0 && (
           <div className="mb-8">
