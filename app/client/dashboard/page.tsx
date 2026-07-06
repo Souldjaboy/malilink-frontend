@@ -14,11 +14,28 @@ import {
   User,
   Utensils,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { appProduct, productConfig } from "../../lib/product-config";
+import { authFetch } from "../../lib/api";
 
 export default function ClientDashboardPage() {
   const router = useRouter();
   const isMaliLink = appProduct === "malilink";
+  const [profile, setProfile] = useState<{ full_name?: string; photo_url?: string } | null>(null);
+
+  useEffect(() => {
+    authFetch("/marketplace/customers/profile")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => data && setProfile(data))
+      .catch(() => {});
+  }, []);
+
+  const initials = (profile?.full_name || "C")
+    .split(" ")
+    .map((part) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -59,7 +76,22 @@ export default function ClientDashboardPage() {
               <p className="font-bold text-yellow-400">
                 {isMaliLink ? "MaliLink Global" : "Triangle Marketplace"}
               </p>
-              <h1 className="mt-1 text-3xl font-black text-white md:text-4xl">Espace client</h1>
+              <div className="mt-1 flex items-center gap-3">
+                {profile?.photo_url ? (
+                  <img
+                    src={profile.photo_url}
+                    alt={profile.full_name || "Client"}
+                    className="h-11 w-11 rounded-full border-2 border-yellow-500 object-cover"
+                  />
+                ) : (
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-yellow-500 font-black text-black">
+                    {initials}
+                  </span>
+                )}
+                <h1 className="text-3xl font-black text-white md:text-4xl">
+                  {profile?.full_name ? profile.full_name.split(" ")[0] : "Espace client"}
+                </h1>
+              </div>
               <p className="mt-1 text-white/70">
                 {isMaliLink
                   ? "Achats, livraisons, restaurants, véhicules, immobilier et laboratoire."

@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authFetch } from "../lib/api";
+import { appProduct, productConfig } from "../lib/product-config";
+
+const isMaliLink = appProduct === "malilink";
 
 export default function ParametresPage() {
   const [message, setMessage] = useState("");
@@ -19,14 +23,26 @@ export default function ParametresPage() {
     website: "",
     logo_url: "",
     slogan: "",
+    business_type: "",
+    city: "",
+    country: "",
+    description: "",
+    currency: "FCFA",
+    opening_hours: "",
+    whatsapp_number: "",
+    facebook_url: "",
+    instagram_url: "",
   });
 
   const fetchSettings = async () => {
-    const response = await fetch("/api/company-settings");
-    const data = await response.json();
+    // /company-settings/current renvoie les paramètres de l'entreprise
+    // connectée (identité + colonnes étendues + business_type).
+    const response = await authFetch("/company-settings/current", { cache: "no-store" });
+    const data = await response.json().catch(() => null);
 
     if (data) {
-      setFormData({
+      setFormData((current) => ({
+        ...current,
         company_name: data.company_name || "",
         address: data.address || "",
         phone: data.phone || "",
@@ -34,7 +50,16 @@ export default function ParametresPage() {
         website: data.website || "",
         logo_url: data.logo_url || "",
         slogan: data.slogan || "",
-      });
+        business_type: data.business_type || "",
+        city: data.city || "",
+        country: data.country || "Mali",
+        description: data.description || "",
+        currency: data.currency || "FCFA",
+        opening_hours: data.opening_hours || "",
+        whatsapp_number: data.whatsapp_number || "",
+        facebook_url: data.facebook_url || "",
+        instagram_url: data.instagram_url || "",
+      }));
     }
   };
 
@@ -142,7 +167,7 @@ export default function ParametresPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <h1 className="text-4xl font-bold text-black mb-2">
         Paramètres entreprise
       </h1>
@@ -157,7 +182,7 @@ export default function ParametresPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="space-y-8">
         <form
           onSubmit={handleSubmit}
@@ -206,6 +231,95 @@ export default function ParametresPage() {
             onChange={handleChange}
             className="border p-3 rounded-xl text-black"
           />
+
+          {isMaliLink && (
+            <>
+              <select
+                name="business_type"
+                value={formData.business_type}
+                onChange={handleChange}
+                className="border p-3 rounded-xl text-black bg-white"
+              >
+                <option value="">Type d&apos;activité...</option>
+                <option value="commerce">Commerce / Boutique</option>
+                <option value="restaurant">Restaurant</option>
+                <option value="ecole">École / Éducation</option>
+                <option value="laboratoire">Laboratoire</option>
+                <option value="immobilier">Immobilier / Hôtel</option>
+                <option value="automobile">Automobile / Garage</option>
+                <option value="logistique">Livraison / Transport</option>
+                <option value="sante">Santé / Clinique</option>
+                <option value="services">Services</option>
+                <option value="b2b">B2B / Grossiste</option>
+                <option value="autre">Autre</option>
+              </select>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <input
+                  type="text"
+                  name="city"
+                  placeholder="Ville (ex : Bamako)"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="border p-3 rounded-xl text-black"
+                />
+                <input
+                  type="text"
+                  name="country"
+                  placeholder="Pays"
+                  value={formData.country}
+                  onChange={handleChange}
+                  className="border p-3 rounded-xl text-black"
+                />
+              </div>
+
+              <textarea
+                name="description"
+                placeholder="Description de l'entreprise (visible par les clients)"
+                value={formData.description}
+                onChange={handleChange}
+                className="border p-3 rounded-xl text-black"
+              />
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <input
+                  type="text"
+                  name="opening_hours"
+                  placeholder="Horaires (ex : Lun-Sam 8h-18h)"
+                  value={formData.opening_hours}
+                  onChange={handleChange}
+                  className="border p-3 rounded-xl text-black"
+                />
+                <input
+                  type="text"
+                  name="whatsapp_number"
+                  placeholder="WhatsApp (ex : +223 ...)"
+                  value={formData.whatsapp_number}
+                  onChange={handleChange}
+                  className="border p-3 rounded-xl text-black"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <input
+                  type="text"
+                  name="facebook_url"
+                  placeholder="Page Facebook (optionnel)"
+                  value={formData.facebook_url}
+                  onChange={handleChange}
+                  className="border p-3 rounded-xl text-black"
+                />
+                <input
+                  type="text"
+                  name="instagram_url"
+                  placeholder="Instagram (optionnel)"
+                  value={formData.instagram_url}
+                  onChange={handleChange}
+                  className="border p-3 rounded-xl text-black"
+                />
+              </div>
+            </>
+          )}
 
           <div className="border rounded-xl p-4">
             <p className="font-bold text-black mb-3">
@@ -361,7 +475,7 @@ export default function ParametresPage() {
             </table>
 
             <div className="border-t mt-6 pt-4 text-xs text-gray-500 flex justify-between">
-              <span>Document généré par Triangle WMS Pro</span>
+              <span>Document généré par {productConfig.name}</span>
               <span>Signature / Validation</span>
             </div>
           </div>
