@@ -199,6 +199,16 @@ const configs: Record<AppProduct, ProductConfig> = {
       profils_vendeurs: true,
       livraison: true,
       education: true,
+      // Gestion complète entreprise (moteur hérité, réactivé pour MaliLink) :
+      // produits, stocks, entrepôts/emplacements, caisse, comptabilité,
+      // badges + pointage QR, gestion des utilisateurs.
+      stock: true,
+      entrepots: true,
+      pos: true,
+      comptabilite: true,
+      pointage: true,
+      badges: true,
+      utilisateurs: true,
     },
     disabledRoutePrefixes: [],
     allowedRoutePrefixes: [],
