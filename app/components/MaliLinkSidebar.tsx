@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { authFetch } from "../lib/api";
 import {
   Activity,
   BarChart3,
@@ -71,6 +72,33 @@ export type MaliLinkSidebarProps = {
    leur sidebar historique. */
 export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
   const [open, setOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Badge rouge : nombre de notifications non lues de l'utilisateur.
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    const userId = stored ? JSON.parse(stored)?.id : null;
+    if (!userId) return;
+
+    const loadUnread = () => {
+      authFetch(`/notifications/${userId}`, { cache: "no-store" })
+        .then((response) => (response.ok ? response.json() : []))
+        .then((rows) => {
+          if (!Array.isArray(rows)) return;
+          setUnreadCount(
+            rows.filter(
+              (row) => row.is_read === false || row.status === "unread"
+            ).length
+          );
+        })
+        .catch(() => {});
+    };
+
+    loadUnread();
+    const interval = setInterval(loadUnread, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const {
     companyName,
     logoUrl,
@@ -207,7 +235,12 @@ export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
                     className="flex items-center gap-3 rounded-xl p-2.5 text-sm font-semibold text-white hover:bg-white/10"
                   >
                     <link.icon size={18} className="shrink-0" />
-                    {link.label}
+                    <span className="flex-1">{link.label}</span>
+                    {link.href === "/notifications" && unreadCount > 0 && (
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-black text-white">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
                   </Link>
                 </li>
               ))}
@@ -244,9 +277,17 @@ export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Ouvrir le menu"
-          className="rounded-xl bg-white/10 p-2.5 text-white"
+          className="relative rounded-xl bg-white/10 p-2.5 text-white"
         >
           <Menu size={22} />
+          {unreadCount > 0 && (
+            <span
+              className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white"
+              aria-label={`${unreadCount} notifications non lues`}
+            >
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
       </div>
 

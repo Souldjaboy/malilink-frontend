@@ -4,11 +4,12 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "MaliLink Global",
     short_name: "MaliLink",
-    description: "Marketplace, IA, SaaS et services numériques.",
-    start_url: "/dashboard",
+    description:
+      "La super-plateforme africaine : marketplace, livraison, école, restaurant, gestion et assistant IA.",
+    start_url: "/",
     display: "standalone",
-    background_color: "#071b38",
-    theme_color: "#071b38",
+    background_color: "#0f1b3d",
+    theme_color: "#0f1b3d",
     icons: [
       {
         src: "/icons/malilink/icon-192.png",
