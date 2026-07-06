@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiUrl } from "../lib/api";
 import { productConfig } from "../lib/product-config";
@@ -15,7 +15,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const created = new URLSearchParams(window.location.search).get("created");
+    if (created === "phone") {
+      setSuccessMessage(
+        "Compte créé avec succès. Connectez-vous avec votre numéro de téléphone."
+      );
+    }
+  }, []);
 
   const handleLogin = async (e: any) => {
     e.preventDefault();
@@ -95,7 +105,16 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(isSuperAdmin ? "/super-admin" : "/dashboard");
+      const role = String(data.user?.role || "").toLowerCase();
+      if (isSuperAdmin) {
+        router.push("/super-admin");
+      } else if (role === "livreur") {
+        router.push("/livreur");
+      } else if (role === "customer") {
+        router.push("/client/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error(error);
       setError("Erreur serveur");
@@ -153,6 +172,12 @@ export default function LoginPage() {
           <h2 className="text-4xl font-bold text-black mb-8">
             Connexion
           </h2>
+
+          {successMessage && (
+            <div className="bg-green-100 text-green-700 p-4 rounded-xl mb-5 font-bold">
+              {successMessage}
+            </div>
+          )}
 
           {error && (
             <div className="bg-red-100 text-red-700 p-4 rounded-xl mb-5 font-bold">

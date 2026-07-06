@@ -170,11 +170,11 @@ const configs: Record<AppProduct, ProductConfig> = {
     startUrl: "/",
     bundleId: "com.malilink.global",
     theme: {
-      primary: "#07152f",
-      accent: "#f5b400",
+      primary: "#0f1b3d",
+      accent: "#d4a23c",
       background: "#ffffff",
-      foreground: "#07152f",
-      themeColor: "#07152f",
+      foreground: "#0f1b3d",
+      themeColor: "#0f1b3d",
     },
     modules: {
       ...baseModules,

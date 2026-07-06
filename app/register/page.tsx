@@ -275,6 +275,15 @@ export default function RegisterPage() {
       }
 
       const verification = registerData.verification || {};
+
+      // Inscription par téléphone seul : compte actif immédiatement,
+      // direction la connexion par numéro de téléphone.
+      if (verification.required === false) {
+        setMessage("Compte créé avec succès. Connectez-vous avec votre numéro de téléphone.");
+        router.push("/login?created=phone");
+        return;
+      }
+
       const verifyPage = verification.target_type === "phone" ? "/verify-phone" : "/verify-email";
       const query = new URLSearchParams();
       if (verification.target_value) query.set("target", verification.target_value);
@@ -383,14 +392,26 @@ export default function RegisterPage() {
               required
             />
 
-            <input
-              type="text"
+            <select
               name="business_type"
-              placeholder="Type activité"
               value={formData.business_type}
               onChange={handleChange}
-              className="border rounded-xl p-4 text-black"
-            />
+              className="border rounded-xl p-4 text-black bg-white"
+              required
+            >
+              <option value="">Type d&apos;activité...</option>
+              <option value="commerce">Commerce / Boutique</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="ecole">École / Éducation</option>
+              <option value="laboratoire">Laboratoire</option>
+              <option value="immobilier">Immobilier / Hôtel</option>
+              <option value="automobile">Automobile / Garage</option>
+              <option value="logistique">Livraison / Transport</option>
+              <option value="sante">Santé / Clinique</option>
+              <option value="services">Services</option>
+              <option value="b2b">B2B / Grossiste</option>
+              <option value="autre">Autre</option>
+            </select>
 
             <input
               type="text"
@@ -402,19 +423,20 @@ export default function RegisterPage() {
             />
 
             <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={formData.email}
+              type="text"
+              name="phone"
+              placeholder="Téléphone (ex : 74 32 92 25)"
+              value={formData.phone}
               onChange={handleChange}
               className="border rounded-xl p-4 text-black"
+              required
             />
 
             <input
-              type="text"
-              name="phone"
-              placeholder="Téléphone"
-              value={formData.phone}
+              type="email"
+              name="email"
+              placeholder="Email (optionnel)"
+              value={formData.email}
               onChange={handleChange}
               className="border rounded-xl p-4 text-black"
             />

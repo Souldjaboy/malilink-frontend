@@ -8,8 +8,8 @@
 }
 
 html[data-product="malilink"] {
-  --product-primary: #07152f;
-  --product-accent: #f5b400;
+  --product-primary: #0f1b3d;
+  --product-accent: #d4a23c;
 }
 
 html[data-product="hafiya"] {
@@ -44,13 +44,13 @@ body {
 ============================================================ */
 
 html[data-product="malilink"] {
-  /* Palette */
-  --ml-blue: #0a1c3a;          /* bleu nuit principal */
-  --ml-blue-deep: #060f22;     /* fond sidebar bas */
-  --ml-blue-2: #123262;        /* bleu secondaire / hover */
-  --ml-gold: #d4a72c;          /* or principal (contraste AA sur bleu) */
-  --ml-gold-light: #f3cf5d;
-  --ml-gold-deep: #b8901f;
+  /* Palette — valeurs extraites du logo officiel MaliLink Global */
+  --ml-blue: #0f1b3d;          /* bleu nuit principal (fond du logo) */
+  --ml-blue-deep: #0a1330;     /* fond sidebar bas */
+  --ml-blue-2: #1a3a6b;        /* bleu secondaire / hover */
+  --ml-gold: #d4a23c;          /* or principal du logo (contraste AA sur bleu) */
+  --ml-gold-light: #e8c464;
+  --ml-gold-deep: #b3862e;
   --ml-white: #ffffff;
   --ml-soft: #f4f6fa;          /* fond de page */
   --ml-card: #ffffff;
@@ -91,10 +91,10 @@ html[data-product="malilink"] .bg-amber-500,
 html[data-product="malilink"] .bg-orange-500,
 html[data-product="malilink"] a[href="/login"],
 html[data-product="malilink"] a[href="/dashboard"] {
-  background: linear-gradient(135deg, #f3cf5d 0%, #d4a72c 40%, #f7dc7e 60%, #b8901f 100%);
-  color: #081428;
+  background: linear-gradient(135deg, var(--ml-gold-light) 0%, var(--ml-gold) 40%, var(--ml-gold-light) 60%, var(--ml-gold-deep) 100%);
+  color: var(--ml-blue-deep);
   border: none;
-  box-shadow: 0 6px 18px rgba(184, 144, 31, 0.28);
+  box-shadow: 0 6px 18px rgba(179, 134, 46, 0.28);
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
@@ -104,7 +104,7 @@ html[data-product="malilink"] .bg-yellow-400:hover,
 html[data-product="malilink"] .bg-amber-500:hover,
 html[data-product="malilink"] .bg-orange-500:hover {
   filter: brightness(1.05);
-  box-shadow: 0 8px 22px rgba(184, 144, 31, 0.38);
+  box-shadow: 0 8px 22px rgba(179, 134, 46, 0.38);
   transform: translateY(-1px);
 }
 
@@ -127,7 +127,7 @@ html[data-product="malilink"] button:focus-visible,
 html[data-product="malilink"] input:focus-visible,
 html[data-product="malilink"] select:focus-visible,
 html[data-product="malilink"] textarea:focus-visible {
-  outline: 3px solid rgba(212, 167, 44, 0.6);
+  outline: 3px solid rgba(212, 162, 60, 0.6);
   outline-offset: 2px;
 }
 
@@ -138,7 +138,7 @@ html[data-product="malilink"] .bg-black,
 html[data-product="malilink"] .bg-gray-900,
 html[data-product="malilink"] .bg-slate-900 {
   background:
-    radial-gradient(circle at top left, rgba(212, 167, 44, 0.14), transparent 32%),
+    radial-gradient(circle at top left, rgba(212, 162, 60, 0.14), transparent 32%),
     linear-gradient(180deg, var(--ml-blue) 0%, var(--ml-blue-deep) 100%);
   color: #ffffff;
 }
@@ -190,8 +190,8 @@ html[data-product="malilink"] aside a.bg-yellow-500,
 html[data-product="malilink"] aside a.bg-yellow-400,
 html[data-product="malilink"] aside button.bg-yellow-500,
 html[data-product="malilink"] aside button.bg-yellow-400 {
-  background: linear-gradient(135deg, var(--ml-gold-light), var(--ml-gold), #f7dc7e, var(--ml-gold-deep));
-  color: #081428;
+  background: linear-gradient(135deg, var(--ml-gold-light), var(--ml-gold), var(--ml-gold-light), var(--ml-gold-deep));
+  color: var(--ml-blue-deep);
 }
 
 html[data-product="malilink"] aside .active *,
@@ -200,13 +200,13 @@ html[data-product="malilink"] aside a.bg-yellow-500 *,
 html[data-product="malilink"] aside a.bg-yellow-400 *,
 html[data-product="malilink"] aside button.bg-yellow-500 *,
 html[data-product="malilink"] aside button.bg-yellow-400 * {
-  color: #081428;
+  color: var(--ml-blue-deep);
 }
 
 /* --- Badge actif hors sidebar --- */
 html[data-product="malilink"] [aria-current="page"],
 html[data-product="malilink"] .active {
-  color: #081428;
+  color: var(--ml-blue-deep);
 }
 
 /* --- Cartes : bordure fine + ombre douce --- */
@@ -244,7 +244,7 @@ html[data-product="malilink"] input:focus,
 html[data-product="malilink"] select:focus,
 html[data-product="malilink"] textarea:focus {
   border-color: var(--ml-gold);
-  box-shadow: 0 0 0 3px rgba(212, 167, 44, 0.18);
+  box-shadow: 0 0 0 3px rgba(212, 162, 60, 0.18);
 }
 
 /* --- Tableaux lisibles --- */

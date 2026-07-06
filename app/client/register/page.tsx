@@ -37,6 +37,17 @@ export default function ClientRegisterPage() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload?.error || "Erreur inscription client.");
+
+      // Inscription par téléphone seul : compte actif immédiatement,
+      // connexion automatique puis espace client.
+      if (payload.verification?.required === false && payload.token) {
+        localStorage.setItem("client_token", payload.token);
+        localStorage.setItem("client_user", JSON.stringify(payload.user || {}));
+        document.cookie = `triangle_client_token=${encodeURIComponent(payload.token)}; path=/; max-age=86400; SameSite=Lax`;
+        router.push("/client/dashboard");
+        return;
+      }
+
       const query = new URLSearchParams();
       if (payload.verification?.target_type) query.set("type", payload.verification.target_type);
       if (payload.verification?.target_value) query.set("target", payload.verification.target_value);
