@@ -39,6 +39,8 @@ export default function MaliLinkHomeButton() {
     return null;
   }
   if (pathname === home) return null;
+  // La messagerie a sa propre barre d'actions en bas : pas de bouton flottant.
+  if (pathname?.startsWith("/social/messages")) return null;
 
   return (
     <Link

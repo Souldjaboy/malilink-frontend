@@ -1,13 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { Ban, Flag, Lock, MapPin, ShieldCheck, UserPlus, Users } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { Ban, Flag, Lock, MapPin, MessageCircle, ShieldCheck, UserPlus, Users } from "lucide-react";
 import { authFetch } from "../../../lib/api";
 import SocialNav from "../../../components/SocialNav";
 
 export default function SocialProfileViewPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
+
+  const openConversation = async (userId: number) => {
+    const response = await authFetch("/social/messages/conversations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId }),
+    }).catch(() => null);
+    const payload = await response?.json().catch(() => ({}));
+    if (response?.ok && payload.conversation_id) {
+      router.push(`/social/messages?c=${payload.conversation_id}`);
+    } else {
+      setNotice(payload?.error || "Impossible d'ouvrir la conversation.");
+    }
+  };
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -125,7 +140,13 @@ export default function SocialProfileViewPage() {
                 <p className="mt-3 rounded-xl bg-gray-50 p-2.5 text-sm font-bold text-gray-700">{notice}</p>
               )}
 
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => openConversation(profile.user_id)}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-yellow-500 py-3 font-black text-black"
+              >
+                <MessageCircle size={17} /> Envoyer un message
+              </button>
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 {profile.is_following ? (
                   <button
                     onClick={() => act(`/social/follows/${profile.user_id}`, "DELETE")}

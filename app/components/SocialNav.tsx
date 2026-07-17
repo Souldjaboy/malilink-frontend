@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Compass, Home, PlusSquare, Settings, Users } from "lucide-react";
+import { Compass, Home, MessageCircle, PlusSquare, Settings } from "lucide-react";
 import { appProduct } from "../lib/product-config";
 
 const TABS = [
   { href: "/social", label: "Accueil", icon: Home },
   { href: "/social/decouvrir", label: "Découvrir", icon: Compass },
   { href: "/social?publier=1", label: "Publier", icon: PlusSquare, match: "__never__" },
-  { href: "/social/amis", label: "Amis", icon: Users },
+  { href: "/social/messages", label: "Messages", icon: MessageCircle },
   { href: "/social/settings", label: "Profil", icon: Settings },
 ];
 
