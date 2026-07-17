@@ -9,7 +9,7 @@ import SocialNav from "../../components/SocialNav";
 const SECTIONS = [
   { key: "pour_vous", label: "Pour vous" },
   { key: "meme_ville", label: "Même ville" },
-  { key: "rencontres", label: "Rencontres 18+" },
+  { key: "professionnels", label: "Professionnels" },
 ];
 
 const REPORT_REASONS = [

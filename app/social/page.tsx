@@ -160,7 +160,7 @@ export default function SocialHomePage() {
             <Sparkles className="mx-auto text-[var(--ml-gold,#d4a23c)]" size={36} />
             <h1 className="mt-3 text-2xl font-black text-white">Bienvenue sur MaliLink Social</h1>
             <p className="mt-2 text-white/80">
-              Rencontres, échanges et réseau professionnel — la communauté MaliLink.
+              La communauté MaliLink : échanges, amis et réseau professionnel.
             </p>
             <div className="mt-5 flex flex-col gap-3">
               <Link href="/client/register" className="rounded-xl bg-yellow-500 px-6 py-3.5 font-black text-black">

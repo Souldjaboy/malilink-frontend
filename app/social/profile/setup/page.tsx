@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { authFetch, getAuthToken } from "../../../lib/api";
 import SocialNav from "../../../components/SocialNav";
 
-const GOAL_OPTIONS: { value: string; label: string; adult?: boolean }[] = [
+const GOAL_OPTIONS: { value: string; label: string }[] = [
   { value: "amitie", label: "Amitié" },
   { value: "discussion", label: "Discussion" },
   { value: "reseau_professionnel", label: "Réseau professionnel" },
@@ -14,7 +14,6 @@ const GOAL_OPTIONS: { value: string; label: string; adult?: boolean }[] = [
   { value: "collaborateurs", label: "Trouver des collaborateurs" },
   { value: "suivre_createurs", label: "Suivre des créateurs" },
   { value: "decouvrir", label: "Découvrir de nouvelles personnes" },
-  { value: "rencontres", label: "Rencontres (réservé aux adultes)", adult: true },
 ];
 
 export default function SocialProfileSetupPage() {
@@ -23,7 +22,7 @@ export default function SocialProfileSetupPage() {
     display_name: "",
     username: "",
     birth_date: "",
-    gender: "",
+    photo_url: "",
     city: "",
     country: "Mali",
     languages: "français",
@@ -31,7 +30,6 @@ export default function SocialProfileSetupPage() {
     bio: "",
     interests: "",
     is_public: true,
-    dating_opt_in: false,
   });
   const [goals, setGoals] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -60,7 +58,7 @@ export default function SocialProfileSetupPage() {
             display_name: profile.display_name || "",
             username: profile.username || "",
             birth_date: profile.birth_date ? String(profile.birth_date).slice(0, 10) : "",
-            gender: profile.gender || "",
+            photo_url: profile.photo_url || "",
             city: profile.city || "",
             country: profile.country || "Mali",
             languages: (profile.languages || []).join(", "),
@@ -68,7 +66,6 @@ export default function SocialProfileSetupPage() {
             bio: profile.bio || "",
             interests: (profile.interests || []).join(", "),
             is_public: profile.is_public !== false,
-            dating_opt_in: profile.dating_opt_in === true,
           });
           setGoals(Array.isArray(profile.goals) ? profile.goals : []);
         }
@@ -88,17 +85,41 @@ export default function SocialProfileSetupPage() {
       value -= 1;
     return value;
   })();
-  const isAdult = age !== null && age >= 18;
-
   const toggleGoal = (value: string) => {
     setGoals((current) =>
       current.includes(value) ? current.filter((goal) => goal !== value) : [...current, value]
     );
   };
 
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const uploadPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    setError("");
+    try {
+      const uploadData = new FormData();
+      uploadData.append("photo", file);
+      const response = await authFetch("/upload-user-photo", { method: "POST", body: uploadData });
+      const data = await response.json().catch(() => ({}));
+      if (data.profile_image_url) {
+        setForm((current) => ({ ...current, photo_url: data.profile_image_url }));
+      } else {
+        setError(data.error || "Erreur upload de la photo.");
+      }
+    } catch {
+      setError("Erreur réseau pendant l'upload de la photo.");
+    }
+    setUploadingPhoto(false);
+  };
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
+    if (!form.photo_url) {
+      setError("La photo de profil est obligatoire pour utiliser MaliLink Social.");
+      return;
+    }
     setSaving(true);
     try {
       const response = await authFetch("/social/profile", {
@@ -109,7 +130,6 @@ export default function SocialProfileSetupPage() {
           languages: form.languages.split(",").map((item) => item.trim()).filter(Boolean),
           interests: form.interests.split(",").map((item) => item.trim()).filter(Boolean),
           goals,
-          dating_opt_in: form.dating_opt_in && isAdult && goals.includes("rencontres"),
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -173,30 +193,36 @@ export default function SocialProfileSetupPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-bold text-black">
-                Genre <span className="font-normal text-gray-400">(facultatif)</span>
-              </label>
-              <select
-                value={form.gender}
-                onChange={(event) => setForm({ ...form, gender: event.target.value })}
-                className="w-full rounded-xl border border-gray-200 bg-white p-3 text-black"
-              >
-                <option value="">Je préfère ne pas dire</option>
-                <option value="homme">Homme</option>
-                <option value="femme">Femme</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-bold text-black">Ville</label>
+          <div>
+            <label className="mb-1 block text-sm font-bold text-black">
+              Photo de profil * <span className="font-normal text-gray-400">(obligatoire)</span>
+            </label>
+            <div className="flex items-center gap-3">
+              {form.photo_url ? (
+                <img src={form.photo_url} alt="Photo de profil" className="h-16 w-16 rounded-full border-2 border-yellow-500 object-cover" />
+              ) : (
+                <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-xs font-bold text-gray-400">
+                  Photo
+                </span>
+              )}
               <input
-                value={form.city}
-                onChange={(event) => setForm({ ...form, city: event.target.value })}
-                className="w-full rounded-xl border border-gray-200 p-3 text-black"
-                placeholder="Bamako"
+                type="file"
+                accept="image/*"
+                onChange={uploadPhoto}
+                className="min-w-0 flex-1 text-sm text-gray-600"
               />
             </div>
+            {uploadingPhoto && <p className="mt-1 text-sm font-bold text-blue-600">Upload en cours...</p>}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-bold text-black">Ville</label>
+            <input
+              value={form.city}
+              onChange={(event) => setForm({ ...form, city: event.target.value })}
+              className="w-full rounded-xl border border-gray-200 p-3 text-black"
+              placeholder="Bamako"
+            />
           </div>
 
           <div>
@@ -236,55 +262,25 @@ export default function SocialProfileSetupPage() {
           <div>
             <p className="mb-2 text-sm font-bold text-black">Que cherchez-vous sur MaliLink Social ?</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {GOAL_OPTIONS.map((goal) => {
-                const disabled = goal.adult && !isAdult;
-                return (
-                  <label
-                    key={goal.value}
-                    className={`flex items-center gap-2.5 rounded-xl border p-3 text-sm font-semibold ${
-                      disabled
-                        ? "border-gray-100 bg-gray-50 text-gray-400"
-                        : goals.includes(goal.value)
-                          ? "border-yellow-500 bg-yellow-50 text-black"
-                          : "border-gray-200 text-black"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={goals.includes(goal.value)}
-                      disabled={disabled}
-                      onChange={() => toggleGoal(goal.value)}
-                    />
-                    {goal.label}
-                  </label>
-                );
-              })}
+              {GOAL_OPTIONS.map((goal) => (
+                <label
+                  key={goal.value}
+                  className={`flex items-center gap-2.5 rounded-xl border p-3 text-sm font-semibold ${
+                    goals.includes(goal.value)
+                      ? "border-yellow-500 bg-yellow-50 text-black"
+                      : "border-gray-200 text-black"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={goals.includes(goal.value)}
+                    onChange={() => toggleGoal(goal.value)}
+                  />
+                  {goal.label}
+                </label>
+              ))}
             </div>
-            {!isAdult && form.birth_date && (
-              <p className="mt-2 text-xs font-semibold text-gray-500">
-                Le mode rencontres est réservé aux personnes majeures (18 ans et plus).
-              </p>
-            )}
           </div>
-
-          {isAdult && goals.includes("rencontres") && (
-            <label className="flex items-start gap-2.5 rounded-xl border border-yellow-500 bg-yellow-50 p-3 text-sm text-black">
-              <input
-                type="checkbox"
-                checked={form.dating_opt_in}
-                onChange={(event) => setForm({ ...form, dating_opt_in: event.target.checked })}
-                className="mt-0.5"
-              />
-              <span>
-                <span className="font-black">J&apos;accepte d&apos;être visible dans la section rencontres.</span>
-                <br />
-                <span className="text-gray-600">
-                  Choix volontaire, modifiable à tout moment dans les paramètres. Sans cette case,
-                  vous n&apos;apparaîtrez jamais en rencontre.
-                </span>
-              </span>
-            </label>
-          )}
 
           <label className="flex items-center gap-2.5 rounded-xl border border-gray-200 p-3 text-sm font-semibold text-black">
             <input

@@ -13,7 +13,6 @@ const PRIVACY_TOGGLES: { key: string; label: string }[] = [
   { key: "show_online", label: "Afficher mon statut en ligne" },
   { key: "show_last_seen", label: "Afficher ma dernière présence" },
   { key: "allow_suggestions", label: "Apparaître dans les suggestions" },
-  { key: "dating_enabled", label: "Être visible en rencontres (18+)" },
 ];
 
 const PRIVACY_SELECTS: { key: string; label: string; options: [string, string][] }[] = [
@@ -46,7 +45,6 @@ export default function SocialSettingsPage() {
           age_max: data.preferences?.age_max ?? 99,
           city: data.preferences?.city || "",
           verified_only: data.preferences?.verified_only === true,
-          discover_genders: data.preferences?.discover_genders || [],
         });
       })
       .catch(() => {})
@@ -174,23 +172,6 @@ export default function SocialSettingsPage() {
                 className="w-full rounded-xl border border-gray-200 p-2.5 text-black"
                 placeholder="Toutes les villes"
               />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-bold text-gray-500">Je souhaite découvrir</label>
-              <select
-                value={(prefs.discover_genders || []).join(",") || ""}
-                onChange={(event) =>
-                  setPrefs({
-                    ...prefs,
-                    discover_genders: event.target.value ? event.target.value.split(",") : [],
-                  })
-                }
-                className="w-full rounded-xl border border-gray-200 bg-white p-2.5 text-black"
-              >
-                <option value="">Tout le monde</option>
-                <option value="femme">Femmes</option>
-                <option value="homme">Hommes</option>
-              </select>
             </div>
             <label className="flex items-center justify-between">
               <span className="text-sm font-semibold text-black">Profils vérifiés uniquement</span>

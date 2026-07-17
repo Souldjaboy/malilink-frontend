@@ -51,7 +51,7 @@ const ROLE_CARDS = [
     icon: HeartHandshake,
     title: "MaliLink Social",
     description:
-      "Rencontres, échanges et réseau professionnel : rejoignez la communauté MaliLink.",
+      "Publications, amis, entreprises et réseau professionnel : rejoignez la communauté MaliLink.",
     button: "Rejoindre MaliLink Social",
   },
 ];
