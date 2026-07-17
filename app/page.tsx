@@ -8,6 +8,7 @@ import {
   FlaskConical,
   GraduationCap,
   Handshake,
+  HeartHandshake,
   MapPin,
   Package,
   ShieldCheck,
@@ -44,6 +45,14 @@ const ROLE_CARDS = [
     description:
       "École, boutique, restaurant, labo, garage… Gérez toute votre activité au même endroit.",
     button: "Créer un compte entreprise",
+  },
+  {
+    href: "/social",
+    icon: HeartHandshake,
+    title: "MaliLink Social",
+    description:
+      "Rencontres, échanges et réseau professionnel : rejoignez la communauté MaliLink.",
+    button: "Rejoindre MaliLink Social",
   },
 ];
 
@@ -135,6 +144,12 @@ function MaliLinkLanding() {
           >
             Explorer la marketplace
           </Link>
+          <Link
+            href="/social"
+            className="rounded-2xl border-2 border-[var(--ml-gold,#d4a23c)]/70 px-8 py-4 text-lg font-bold text-[var(--ml-gold-light,#e8c464)] hover:bg-white/10"
+          >
+            Découvrir MaliLink Social
+          </Link>
         </div>
       </section>
 
@@ -146,7 +161,7 @@ function MaliLinkLanding() {
         <p className="mt-2 text-center text-white/70">
           Chaque profil a son espace dédié, dès l’inscription.
         </p>
-        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
           {ROLE_CARDS.map((card) => (
             <div
               key={card.href}

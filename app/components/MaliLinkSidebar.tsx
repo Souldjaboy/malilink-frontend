@@ -119,6 +119,7 @@ export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
       links: [
         { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard, show: true },
         { href: "/recherche", label: "Recherche", icon: Search, show: true },
+        { href: "/social", label: "MaliLink Social", icon: Users, show: moduleEnabled("social") },
         { href: "/notifications", label: "Notifications", icon: Bell, show: moduleEnabled("notifications") },
         { href: "/chat", label: "Chat interne", icon: MessageCircle, show: moduleEnabled("chat") },
       ],

@@ -255,6 +255,7 @@ export default function DashboardPage() {
     activites: "logistique",
     education: "education",
     livraison: "livraison",
+    social: "social",
   };
   const moduleEnabled = (key: string) => {
     const productModule = productModuleByDashboardKey[key];
