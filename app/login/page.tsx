@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiUrl } from "../lib/api";
-import { productConfig } from "../lib/product-config";
+import { appProduct, productConfig } from "../lib/product-config";
 import InstallPWAButton from "../../components/InstallPWAButton";
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
 import SocialAuthButtons from "../../components/SocialAuthButtons";
@@ -136,31 +136,43 @@ export default function LoginPage() {
                 className="h-16 w-16 rounded-2xl bg-yellow-500 p-3"
               />
               <div>
-                <h1 className="text-4xl font-bold">{productConfig.name}</h1>
+                <h1 className="text-4xl font-bold text-white">{productConfig.name}</h1>
                 <p className="text-sm font-bold uppercase tracking-wide text-yellow-400">
-                  ERP / WMS intelligent
+                  {productConfig.slogan}
                 </p>
               </div>
             </div>
 
-            <h2 className="mt-10 text-3xl font-bold leading-tight md:text-5xl">
-              {productConfig.slogan}
+            <h2 className="mt-10 text-3xl font-bold leading-tight text-white md:text-5xl">
+              {appProduct === "malilink"
+                ? "Tous vos services, au même endroit."
+                : productConfig.slogan}
             </h2>
 
             <p className="mt-5 text-lg text-gray-300">
-              Stocks, ventes, achats, paiements, rapports, pointage et intelligence
-              artificielle réunis dans une solution unique.
+              {appProduct === "malilink"
+                ? "Marketplace, livraison, réseau social, gestion d'entreprise et assistant IA réunis dans une seule application."
+                : "Stocks, ventes, achats, paiements, rapports, pointage et intelligence artificielle réunis dans une solution unique."}
             </p>
           </div>
 
           <div className="relative mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {[
-              "Gestion des stocks",
-              "Gestion des ventes",
-              "Multi-entrepôts",
-              "Rapports intelligents",
-              "Assistant IA intégré",
-            ].map((item) => (
+            {(appProduct === "malilink"
+              ? [
+                  "Marketplace multi-vendeurs",
+                  "Livraison & taxi",
+                  "MaliLink Social",
+                  "Gestion complète entreprise",
+                  "Assistant IA intégré",
+                ]
+              : [
+                  "Gestion des stocks",
+                  "Gestion des ventes",
+                  "Multi-entrepôts",
+                  "Rapports intelligents",
+                  "Assistant IA intégré",
+                ]
+            ).map((item) => (
               <div key={item} className="rounded-xl bg-white/10 p-3 font-bold">
                 {item}
               </div>

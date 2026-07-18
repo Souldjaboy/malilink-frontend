@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { apiUrl } from "../lib/api";
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
+import { productConfig } from "../lib/product-config";
 
 export default function SupportPage() {
   const [form, setForm] = useState({
@@ -49,7 +50,7 @@ export default function SupportPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-black md:p-8">
       <div className="mx-auto max-w-2xl rounded-3xl bg-white p-8 shadow-2xl">
-        <h1 className="text-3xl font-bold">Support Triangle WMS Pro</h1>
+        <h1 className="text-3xl font-bold">Support {productConfig.name}</h1>
         <p className="mt-2 text-gray-600">
           Envoyez une demande au support ou contactez directement WhatsApp.
         </p>

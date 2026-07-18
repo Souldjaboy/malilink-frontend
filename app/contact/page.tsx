@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { absoluteUrl, seoBusiness } from "../lib/seo";
+import { productConfig } from "../lib/product-config";
 
 export const metadata: Metadata = {
   title: "Contact Bamako",
   description:
-    "Contactez Triangle WMS Pro à ACI Bamako pour logiciel de gestion de stock, caisse POS, marketplace, logistique, pharmacie, restaurant, hôtel et entrepôt.",
+    `Contactez {productConfig.name} à ACI Bamako pour logiciel de gestion de stock, caisse POS, marketplace, logistique, pharmacie, restaurant, hôtel et entrepôt.`,
   alternates: { canonical: "/contact" },
   openGraph: {
-    title: "Contact Triangle WMS Pro à Bamako",
-    description: "Contact commercial pour Triangle WMS Pro, logiciel de gestion pour entreprises au Mali.",
+    title: `Contact {productConfig.name} à Bamako`,
+    description: `Contact commercial pour {productConfig.name}, logiciel de gestion pour entreprises au Mali.`,
     url: absoluteUrl("/contact"),
   },
 };
@@ -29,7 +30,7 @@ export default function ContactPage() {
             Parlons de votre gestion de stock, caisse ou marketplace.
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-white/75">
-            Triangle WMS Pro accompagne les entreprises à Bamako, au Mali et en Afrique pour digitaliser leurs opérations.
+            {productConfig.name} accompagne les entreprises à Bamako, au Mali et en Afrique pour digitaliser leurs opérations.
           </p>
         </div>
       </section>

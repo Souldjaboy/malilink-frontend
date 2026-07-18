@@ -140,7 +140,7 @@ export default function InstallerApplicationPage() {
         <div className="rounded-2xl bg-black p-6 text-white shadow">
           <h2 className="text-2xl font-black">Après installation</h2>
           <p className="mt-3 text-white/70">
-            Ouvrez l’icône Triangle WMS Pro, puis choisissez votre espace : Marketplace client, connexion entreprise ou super admin. Les données privées ne sont pas stockées dans le cache public.
+            Ouvrez l’icône {productConfig.name}, puis choisissez votre espace : Marketplace client, connexion entreprise ou super admin. Les données privées ne sont pas stockées dans le cache public.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <Link href="/marketplace" className="rounded-xl bg-yellow-500 px-5 py-3 font-black text-black">Ouvrir Marketplace</Link>

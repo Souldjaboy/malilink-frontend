@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BarChart3, FileText, Landmark, QrCode, ShieldCheck, ShoppingCart, Smartphone, Users } from "lucide-react";
 import { absoluteUrl } from "../lib/seo";
+import { productConfig } from "../lib/product-config";
 
 export const metadata: Metadata = {
   title: "Services logiciels pour entreprises",
   description:
-    "Découvrez les services Triangle WMS Pro : gestion de stock, POS, marketplace, documents, QR codes, pointage, rapports, comptabilité et accompagnement PME.",
+    `Découvrez les services {productConfig.name} : gestion de stock, POS, marketplace, documents, QR codes, pointage, rapports, comptabilité et accompagnement PME.`,
   alternates: { canonical: "/services" },
   openGraph: {
-    title: "Services Triangle WMS Pro",
+    title: `Services {productConfig.name}`,
     description: "Services logiciels pour gérer stock, caisse, marketplace, documents et opérations d’entreprise au Mali.",
     url: absoluteUrl("/services"),
   },
@@ -36,7 +37,7 @@ export default function ServicesPage() {
             Des outils simples pour gérer l’activité quotidienne.
           </h1>
           <p className="mt-5 max-w-3xl text-lg text-gray-600">
-            Triangle WMS Pro accompagne les entreprises maliennes et africaines avec une solution web pour stock, caisse, marketplace, documents, pointage et rapports.
+            {productConfig.name} accompagne les entreprises maliennes et africaines avec une solution web pour stock, caisse, marketplace, documents, pointage et rapports.
           </p>
         </div>
       </section>
@@ -58,7 +59,7 @@ export default function ServicesPage() {
         <div className="rounded-3xl bg-black p-8 text-white md:p-10">
           <h2 className="text-3xl font-black">Vous voulez digitaliser votre entreprise ?</h2>
           <p className="mt-3 max-w-2xl text-white/70">
-            Commencez par créer votre espace entreprise ou contactez l’équipe Triangle WMS Pro à Bamako.
+            Commencez par créer votre espace entreprise ou contactez l’équipe {productConfig.name} à Bamako.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/register" className="rounded-xl bg-yellow-500 px-5 py-3 font-black text-black">Créer une entreprise</Link>

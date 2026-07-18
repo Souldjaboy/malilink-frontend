@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { productConfig } from "../lib/product-config";
 
 export default function RapportsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -55,7 +56,7 @@ export default function RapportsPage() {
       },
       body: JSON.stringify({
         recipient_email: recipient,
-        subject: `Rapport ${activeReport} Triangle WMS Pro`,
+        subject: `Rapport ${activeReport} ${productConfig.name}`,
         html,
         message: filters.observation || `Rapport ${activeReport}`,
       }),

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { authFetch } from "../lib/api";
 import { formatFCFA } from "../lib/format";
+import { productConfig } from "../lib/product-config";
 
 type Field = {
   name: string;
@@ -121,7 +122,7 @@ export default function BusinessModulePage({
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-col gap-4 rounded-2xl bg-black p-6 text-white shadow md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-yellow-400">Triangle WMS Pro</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-yellow-400">{productConfig.name}</p>
             <h1 className="mt-2 text-3xl font-black">{title}</h1>
             <p className="mt-2 max-w-3xl text-sm text-gray-300">{description}</p>
           </div>

@@ -2,14 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckCircle2, Globe2, LockKeyhole, MapPin } from "lucide-react";
 import { absoluteUrl, seoBusiness } from "../lib/seo";
+import { productConfig } from "../lib/product-config";
 
 export const metadata: Metadata = {
   title: "À propos",
   description:
-    "À propos de Triangle WMS Pro, solution de gestion de stock, caisse POS, marketplace et logistique développée pour les entreprises au Mali et en Afrique.",
+    `À propos de {productConfig.name}, solution de gestion de stock, caisse POS, marketplace et logistique développée pour les entreprises au Mali et en Afrique.`,
   alternates: { canonical: "/a-propos" },
   openGraph: {
-    title: "À propos de Triangle WMS Pro",
+    title: `À propos de {productConfig.name}`,
     description: "Une plateforme SaaS pour aider les PME africaines à gérer stock, ventes, caisse, documents et marketplace.",
     url: absoluteUrl("/a-propos"),
   },
@@ -28,7 +29,7 @@ export default function AboutPage() {
       <section className="relative overflow-hidden bg-black px-4 py-16 text-white md:px-8">
         <img
           src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1800&q=80"
-          alt="Équipe professionnelle utilisant Triangle WMS Pro"
+          alt={`Équipe professionnelle utilisant {productConfig.name}`}
           className="absolute inset-0 h-full w-full object-cover opacity-25"
         />
         <div className="relative mx-auto max-w-6xl">
@@ -37,7 +38,7 @@ export default function AboutPage() {
             Une plateforme de gestion conçue pour les entreprises africaines.
           </h1>
           <p className="mt-5 max-w-3xl text-lg text-white/75">
-            Triangle WMS Pro aide les entreprises à mieux gérer stocks, ventes, caisse, documents, pointage, marketplace et opérations quotidiennes.
+            {productConfig.name} aide les entreprises à mieux gérer stocks, ventes, caisse, documents, pointage, marketplace et opérations quotidiennes.
           </p>
         </div>
       </section>
@@ -59,7 +60,7 @@ export default function AboutPage() {
         <div className="rounded-3xl bg-white p-8 shadow md:p-10">
           <h2 className="text-3xl font-black">Notre mission</h2>
           <p className="mt-4 max-w-4xl leading-7 text-gray-600">
-            Rendre la gestion professionnelle accessible aux pharmacies, boutiques, restaurants, hôtels, entrepôts, quincailleries, laboratoires, transporteurs et entreprises de services. Triangle WMS Pro réunit WMS, POS, marketplace et outils de suivi dans une seule application web.
+            Rendre la gestion professionnelle accessible aux pharmacies, boutiques, restaurants, hôtels, entrepôts, quincailleries, laboratoires, transporteurs et entreprises de services. {productConfig.name} réunit WMS, POS, marketplace et outils de suivi dans une seule application web.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/solutions" className="rounded-xl bg-yellow-500 px-5 py-3 font-black text-black">Voir les solutions</Link>

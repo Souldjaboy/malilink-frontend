@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiUrl } from "../../../../../lib/api";
 import { formatFCFA } from "../../../../../lib/format";
+import { productConfig } from "../../../../../lib/product-config";
 
 export default function RestaurantPublicTablePage() {
   const params = useParams<{ companyId: string; tableId: string }>();
@@ -69,7 +70,7 @@ export default function RestaurantPublicTablePage() {
     <main className="min-h-screen bg-gray-100 p-4">
       <div className="mx-auto max-w-5xl space-y-4">
         <header className="rounded-2xl bg-black p-5 text-white shadow">
-          <p className="text-sm font-bold text-yellow-400">Triangle WMS Restaurant</p>
+          <p className="text-sm font-bold text-yellow-400">{productConfig.shortName} Restaurant</p>
           <h1 className="mt-2 text-3xl font-black">Table {data?.table?.table_number || params.tableId}</h1>
           <p className="text-gray-300">Choisissez vos plats, envoyez la commande ou appelez un serveur.</p>
         </header>

@@ -1,4 +1,5 @@
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
+import { productConfig } from "../lib/product-config";
 
 export default function AbonnementExpirePage() {
   return (
@@ -12,7 +13,7 @@ export default function AbonnementExpirePage() {
             Abonnement expiré
           </h1>
           <p className="mb-8 text-lg text-gray-600">
-            Votre abonnement Triangle WMS Pro a expiré. Veuillez renouveler
+            Votre abonnement {productConfig.name} a expiré. Veuillez renouveler
             votre licence pour continuer.
           </p>
           <div className="flex flex-col justify-center gap-3 md:flex-row">

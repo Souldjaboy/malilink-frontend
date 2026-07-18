@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { productConfig } from "../lib/product-config";
 
 export default function ChatPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -232,7 +233,7 @@ export default function ChatPage() {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify({
-        title: selectedConversation.title || "Réunion Triangle WMS",
+        title: selectedConversation.title || `Réunion {productConfig.shortName}`,
         conversation_id: selectedConversation.id,
         participants: participantIds,
       }),

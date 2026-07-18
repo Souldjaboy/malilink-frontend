@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { apiUrl } from "../lib/api";
+import { productConfig } from "../lib/product-config";
 
 function MotDePasseOublieContent() {
   const searchParams = useSearchParams();
@@ -81,7 +82,7 @@ function MotDePasseOublieContent() {
     <main className="min-h-screen bg-gray-100 p-4 text-black md:p-8">
       <section className="mx-auto max-w-5xl overflow-hidden rounded-3xl bg-white shadow-2xl lg:grid lg:grid-cols-2">
         <div className="bg-black p-8 text-white md:p-10">
-          <p className="font-black text-yellow-400">Triangle WMS Pro</p>
+          <p className="font-black text-yellow-400">{productConfig.name}</p>
           <h1 className="mt-4 text-4xl font-black">Réinitialiser le mot de passe</h1>
           <p className="mt-4 text-white/75">
             Recevez un code sécurisé par email. Si le SMS ou WhatsApp est configuré, le téléphone pourra aussi être utilisé.

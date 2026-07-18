@@ -4,6 +4,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { useEffect, useState } from "react";
 import { authHeaders } from "../../lib/api";
 import { formatFCFA } from "../../lib/format";
+import { productConfig } from "../../lib/product-config";
 
 export default function PosProduitsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -28,7 +29,7 @@ export default function PosProduitsPage() {
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-6 print:hidden">
         <div>
           <h1 className="text-4xl font-bold">Produits POS</h1>
-          <p className="text-gray-500">Étiquettes QR Triangle WMS / code interne imprimables.</p>
+          <p className="text-gray-500">Étiquettes QR {productConfig.shortName} / code interne imprimables.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <a href="/pos" className="bg-white text-black px-5 py-3 rounded-xl font-bold">Retour caisse</a>

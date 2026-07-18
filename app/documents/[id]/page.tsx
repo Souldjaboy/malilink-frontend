@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { authFetch } from "../../lib/api";
 import { formatFCFA } from "../../lib/format";
+import { productConfig } from "../../lib/product-config";
 
 export default function DocumentDetailPage() {
   const params = useParams<{ id: string }>();
@@ -158,7 +159,7 @@ export default function DocumentDetailPage() {
             {company?.logo_url && (
               <img src={company.logo_url} alt="Logo entreprise" className="mb-3 max-h-20 max-w-40 object-contain" />
             )}
-            <h2 className="text-xl font-black">{company?.name || company?.company_name || "Triangle WMS Pro"}</h2>
+            <h2 className="text-xl font-black">{company?.name || company?.company_name || `{productConfig.name}`}</h2>
             <p className="text-gray-600">{company?.address || ""}</p>
             <p className="text-gray-600">
               {company?.phone || ""} {company?.email ? `| ${company.email}` : ""}

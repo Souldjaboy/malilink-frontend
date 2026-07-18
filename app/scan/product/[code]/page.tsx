@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { formatFCFA } from "../../../lib/format";
+import { productConfig } from "../../../lib/product-config";
 
 export default function ProductScanPage() {
   const [details, setDetails] = useState<any>(null);
@@ -75,7 +76,7 @@ export default function ProductScanPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold">{product.name}</h1>
-          <p className="text-gray-500">{product.reference} | Fiche ouverte depuis QR Triangle WMS</p>
+          <p className="text-gray-500">{product.reference} | Fiche ouverte depuis QR ${productConfig.shortName}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <a href="/pos" className="bg-yellow-500 text-black px-5 py-3 rounded-xl font-bold">Vendre</a>

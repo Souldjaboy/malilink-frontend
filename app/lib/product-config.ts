@@ -166,7 +166,7 @@ const configs: Record<AppProduct, ProductConfig> = {
     domains: ["malilinkglobal.com", "www.malilinkglobal.com", "malilink.trianglewmspro.com"],
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://malilinkglobal.com",
     logoText: "MaliLink Global",
-    logoUrl: "/brands/malilink-logo.svg",
+    logoUrl: "/brands/malilink-logo-officiel.jpg",
     faviconUrl: "/brands/malilink-favicon.svg",
     appleTouchIconUrl: "/brands/malilink-logo.svg",
     startUrl: "/",

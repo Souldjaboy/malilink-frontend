@@ -15,14 +15,15 @@ import {
   Wrench,
 } from "lucide-react";
 import { absoluteUrl, seoBusiness } from "../lib/seo";
+import { productConfig } from "../lib/product-config";
 
 export const metadata: Metadata = {
   title: "Solutions de gestion au Mali",
   description:
-    "Solutions Triangle WMS Pro pour gestion de stock, caisse POS, pharmacie, restaurant, hôtel, quincaillerie, boutique, entrepôt, transport et marketplace au Mali.",
+    `Solutions {productConfig.name} pour gestion de stock, caisse POS, pharmacie, restaurant, hôtel, quincaillerie, boutique, entrepôt, transport et marketplace au Mali.`,
   alternates: { canonical: "/solutions" },
   openGraph: {
-    title: "Solutions Triangle WMS Pro au Mali",
+    title: `Solutions {productConfig.name} au Mali`,
     description:
       "Logiciel de gestion de stock, caisse, marketplace, logistique et multi-entreprise pour PME au Mali et en Afrique.",
     url: absoluteUrl("/solutions"),
@@ -98,7 +99,7 @@ export default function SolutionsPage() {
       <section className="relative overflow-hidden bg-black px-4 py-16 text-white md:px-8">
         <img
           src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1800&q=80"
-          alt="Gestion d’entrepôt et stock au Mali avec Triangle WMS Pro"
+          alt={`Gestion d’entrepôt et stock au Mali avec {productConfig.name}`}
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
         <div className="relative mx-auto max-w-6xl">

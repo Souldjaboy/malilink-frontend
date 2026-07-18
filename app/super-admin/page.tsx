@@ -7,6 +7,7 @@ import {
   Plus,
   ShieldCheck,
 } from "lucide-react";
+import { productConfig } from "../lib/product-config";
 
 const planFields = [
   { key: "name", label: "Nom", type: "text" },
@@ -622,7 +623,7 @@ export default function SuperAdminPage() {
           </h1>
 
           <p className="text-gray-500">
-            Gestion complète Triangle WMS Pro
+            Gestion complète {productConfig.name}
           </p>
 
         </div>
