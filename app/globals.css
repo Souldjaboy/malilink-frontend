@@ -72,17 +72,18 @@ html[data-product="malilink"] body {
   color: var(--ml-text);
 }
 
-/* --- Titres : hiérarchie nette --- */
-html[data-product="malilink"] h1,
-html[data-product="malilink"] h2,
-html[data-product="malilink"] h3 {
-  color: var(--ml-blue);
-  letter-spacing: -0.015em;
-}
+/* --- Titres et liens : couleurs PAR DÉFAUT uniquement.
+       @layer base => les utilitaires Tailwind (layer utilities) gagnent
+       toujours : text-white reste blanc sur fond bleu nuit. --- */
+@layer base {
+  html[data-product="malilink"] :where(h1, h2, h3) {
+    color: var(--ml-blue);
+    letter-spacing: -0.015em;
+  }
 
-/* --- Liens lisibles --- */
-html[data-product="malilink"] a {
-  color: var(--ml-blue-2);
+  html[data-product="malilink"] :where(a) {
+    color: var(--ml-blue-2);
+  }
 }
 
 /* --- Boutons : or marbré réservé aux CTA (jaune/amber du markup),
@@ -165,9 +166,7 @@ html[data-product="malilink"] nav.bg-slate-900 * {
   color: #ffffff;
 }
 
-html[data-product="malilink"] aside h1,
-html[data-product="malilink"] aside h2,
-html[data-product="malilink"] aside h3 {
+html[data-product="malilink"] aside :where(h1, h2, h3) {
   color: #ffffff;
 }
 
