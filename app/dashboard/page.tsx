@@ -419,6 +419,20 @@ export default function DashboardPage() {
           show: moduleEnabled("wallet"),
         },
         {
+          href: "/finance",
+          title: "Finance",
+          description: "Revenus, dépenses, bénéfices, trésorerie et budgets.",
+          icon: BarChart3,
+          show: canViewAccounting && moduleEnabled("comptabilite"),
+        },
+        {
+          href: "/badges",
+          title: "Badges",
+          description: "Générer, imprimer et vérifier les badges QR.",
+          icon: ShieldCheck,
+          show: isAdminLike && moduleEnabled("badges"),
+        },
+        {
           href: "/comptabilite",
           title: "Comptabilité",
           description: "Factures, dépenses, trésorerie et paie.",

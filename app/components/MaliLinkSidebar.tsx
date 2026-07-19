@@ -6,6 +6,8 @@ import { authFetch } from "../lib/api";
 import {
   Activity,
   Wallet,
+  BadgeCheck,
+  Landmark,
   BarChart3,
   Bell,
   Bike,
@@ -181,6 +183,7 @@ export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
       title: "Gestion / Finance",
       links: [
         { href: "/wallet", label: "MaliLink Wallet", icon: Wallet, show: moduleEnabled("wallet") },
+        { href: "/finance", label: "Finance", icon: Landmark, show: canViewAccounting && moduleEnabled("comptabilite") },
         { href: "/comptabilite", label: "Comptabilité", icon: Calculator, show: canViewAccounting && moduleEnabled("comptabilite") },
         { href: "/documents", label: "Documents", icon: FileText, show: canViewDirectionModules && moduleEnabled("documents") },
         { href: "/rapports", label: "Rapports", icon: BarChart3, show: canViewDirectionModules && moduleEnabled("rapports") },
@@ -189,6 +192,8 @@ export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
         { href: "/alertes", label: "Alertes", icon: TriangleAlert, show: (canManageWarehouse || isReadOnlyRole) && moduleEnabled("alertes") },
         { href: "/attendance-scan", label: "Pointage QR", icon: QrCode, show: moduleEnabled("pointage") },
         { href: "/pointage", label: "Pointage", icon: ClipboardCheck, show: moduleEnabled("pointage") },
+        { href: "/parametres-pointage", label: "Paramètres pointage", icon: Settings, show: isAdminLike && moduleEnabled("pointage") },
+        { href: "/badges", label: "Badges", icon: BadgeCheck, show: isAdminLike && moduleEnabled("badges") },
         { href: "/activites", label: "Activités", icon: Activity, show: isAdminLike && moduleEnabled("activites") },
         { href: "/utilisateurs", label: "Utilisateurs", icon: Users, show: isAdminLike && moduleEnabled("utilisateurs") },
         { href: "/parametres", label: "Paramètres", icon: Settings, show: isAdminLike },

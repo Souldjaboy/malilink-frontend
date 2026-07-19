@@ -352,7 +352,7 @@ const routeModuleRules: Array<{ prefixes: string[]; module: ProductModule }> = [
   { prefixes: ["/pos"], module: "pos" },
   { prefixes: ["/stocks", "/produits", "/scanner", "/inventaires"], module: "stock" },
   { prefixes: ["/entrepots", "/emplacements"], module: "entrepots" },
-  { prefixes: ["/comptabilite"], module: "comptabilite" },
+  { prefixes: ["/comptabilite", "/finance"], module: "comptabilite" },
   { prefixes: ["/attendance-scan", "/pointage", "/parametres-pointage"], module: "pointage" },
   { prefixes: ["/documents"], module: "documents" },
   { prefixes: ["/rapports"], module: "rapports" },
