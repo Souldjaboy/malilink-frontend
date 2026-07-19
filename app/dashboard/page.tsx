@@ -256,6 +256,7 @@ export default function DashboardPage() {
     education: "education",
     livraison: "livraison",
     social: "social",
+    wallet: "wallet",
   };
   const moduleEnabled = (key: string) => {
     const productModule = productModuleByDashboardKey[key];
@@ -410,6 +411,13 @@ export default function DashboardPage() {
       key: "gestion",
       title: "Comptabilité / Gestion",
       cards: [
+        {
+          href: "/wallet",
+          title: "MaliLink Wallet",
+          description: "Solde, transferts internes, reçus et historique.",
+          icon: CreditCard,
+          show: moduleEnabled("wallet"),
+        },
         {
           href: "/comptabilite",
           title: "Comptabilité",

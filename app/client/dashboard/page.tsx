@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Building2,
+  Wallet,
   CalendarDays,
   Car,
   LogOut,
@@ -50,6 +51,7 @@ export default function ClientDashboardPage() {
   const cards = [
     { href: "/marketplace", label: "Marketplace", description: "Acheter des produits", icon: ShoppingCart, show: true },
     { href: "/client/orders", label: "Mes commandes", description: "Suivre mes achats", icon: PackageCheck, show: true },
+    { href: "/wallet", label: "MaliLink Wallet", description: "Solde, transferts et reçus", icon: Wallet, show: isMaliLink },
     { href: "/social", label: "MaliLink Social", description: "Communauté, amis et réseau pro", icon: User, show: isMaliLink },
     { href: "/client/livraison", label: "Livraison / Taxi", description: "Demander et suivre une course", icon: Truck, show: isMaliLink },
     { href: "/client/restaurants", label: "Restaurants", description: "Voir les menus, commander", icon: Utensils, show: isMaliLink },

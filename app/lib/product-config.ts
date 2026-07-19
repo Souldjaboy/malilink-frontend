@@ -33,7 +33,8 @@ export type ProductModule =
   | "profils_vendeurs"
   | "livraison"
   | "education"
-  | "social";
+  | "social"
+  | "wallet";
 
 type ProductTheme = {
   primary: string;
@@ -106,6 +107,7 @@ const baseModules: Record<ProductModule, boolean> = {
   livraison: false,
   education: false,
   social: false,
+  wallet: false,
 };
 
 const configs: Record<AppProduct, ProductConfig> = {
@@ -213,6 +215,8 @@ const configs: Record<AppProduct, ProductConfig> = {
       utilisateurs: true,
       // Réseau social MaliLink (uniquement sur le produit malilink)
       social: true,
+      // Wallet interne (grand livre, transferts internes)
+      wallet: true,
     },
     disabledRoutePrefixes: [],
     allowedRoutePrefixes: [],
@@ -363,6 +367,7 @@ const routeModuleRules: Array<{ prefixes: string[]; module: ProductModule }> = [
   { prefixes: ["/livreur", "/client/livraison"], module: "livraison" },
   { prefixes: ["/education"], module: "education" },
   { prefixes: ["/social"], module: "social" },
+  { prefixes: ["/wallet"], module: "wallet" },
 ];
 
 export function isRouteAvailable(pathname: string) {

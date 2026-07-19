@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { authFetch } from "../lib/api";
 import {
   Activity,
+  Wallet,
   BarChart3,
   Bell,
   Bike,
@@ -179,6 +180,7 @@ export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
     {
       title: "Gestion / Finance",
       links: [
+        { href: "/wallet", label: "MaliLink Wallet", icon: Wallet, show: moduleEnabled("wallet") },
         { href: "/comptabilite", label: "Comptabilité", icon: Calculator, show: canViewAccounting && moduleEnabled("comptabilite") },
         { href: "/documents", label: "Documents", icon: FileText, show: canViewDirectionModules && moduleEnabled("documents") },
         { href: "/rapports", label: "Rapports", icon: BarChart3, show: canViewDirectionModules && moduleEnabled("rapports") },
