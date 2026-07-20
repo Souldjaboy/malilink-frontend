@@ -15,6 +15,7 @@ import {
 import { QRCodeCanvas } from "qrcode.react";
 import { authFetch, getAuthToken } from "../lib/api";
 import { formatFCFA } from "../lib/format";
+import WalletCard from "../components/WalletCard";
 
 type Entry = {
   id: number;
@@ -182,6 +183,13 @@ export default function WalletPage() {
 
         {feedback && (
           <p className="mt-3 rounded-xl bg-white p-3 text-sm font-bold text-gray-700 shadow-sm">{feedback}</p>
+        )}
+
+        {/* Carte virtuelle MaliLink */}
+        {!loading && !error && data?.card && (
+          <div className="mt-4">
+            <WalletCard card={data.card} onChanged={load} />
+          </div>
         )}
 
         {/* Transfert */}
