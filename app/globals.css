@@ -300,3 +300,19 @@ html[data-product="malilink"] ::-webkit-scrollbar-thumb:hover {
   border-radius: 14px;
   object-fit: cover;
 }
+
+/* --- Animations du hero MaliLink Voyage (décor uniquement) --- */
+@keyframes ml-hero-float-kf {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+@keyframes ml-hero-spin-kf {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.ml-hero-float { animation: ml-hero-float-kf 6s ease-in-out infinite; }
+.ml-hero-float2 { animation: ml-hero-float-kf 8s ease-in-out infinite; }
+.ml-hero-spin { animation: ml-hero-spin-kf 90s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ml-hero-float, .ml-hero-float2, .ml-hero-spin { animation: none; }
+}

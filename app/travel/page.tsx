@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, SlidersHorizontal, Ticket, Sparkles, ArrowLeftRight, Plane } from "lucide-react";
+import { Search, SlidersHorizontal, Ticket, Sparkles, ArrowLeftRight, Plane, Building2, Globe } from "lucide-react";
 import {
-  fetchModes,
   searchOffers,
-  MODE_EMOJI,
-  type TravelMode,
+  CATEGORIES,
   type TravelCity,
   type TravelOffer,
   type TravelSearchResult,
@@ -26,8 +24,8 @@ function tomorrowISO() {
 }
 
 export default function TravelPage() {
-  const [modes, setModes] = useState<TravelMode[]>([]);
-  const [mode, setMode] = useState<string>("bus");
+  const [category, setCategory] = useState<string>("plane");
+  const [categoryUnavailable, setCategoryUnavailable] = useState(false);
 
   const [origin, setOrigin] = useState<TravelCity | null>(null);
   const [destination, setDestination] = useState<TravelCity | null>(null);
@@ -50,18 +48,20 @@ export default function TravelPage() {
 
   const [drawerOffer, setDrawerOffer] = useState<TravelOffer | null>(null);
 
-  useEffect(() => {
-    fetchModes()
-      .then((m) => {
-        setModes(m);
-        const firstEnabled = m.find((x) => x.enabled);
-        if (firstEnabled) setMode(firstEnabled.code);
-      })
-      .catch(() => setModes([]));
-  }, []);
+  const selectedCategory = CATEGORIES.find((c) => c.code === category) || CATEGORIES[0];
 
   const runSearch = async () => {
     setFormError("");
+    setCategoryUnavailable(false);
+    setResult(null);
+    setError("");
+
+    // Catégories hors modèle de trajet (hôtel, location) : pas encore de
+    // partenaires. On l'annonce clairement, sans jamais inventer de données.
+    if (!selectedCategory.searchable) {
+      setCategoryUnavailable(true);
+      return;
+    }
     if (!origin || !destination) {
       setFormError("Choisissez une ville de départ et une destination.");
       return;
@@ -71,8 +71,6 @@ export default function TravelPage() {
       return;
     }
     setLoading(true);
-    setError("");
-    setResult(null);
     try {
       const data = await searchOffers({
         originCityId: origin.id,
@@ -80,7 +78,7 @@ export default function TravelPage() {
         date: dateAller,
         adults,
         children,
-        mode,
+        mode: selectedCategory.mode,
       });
       setResult(data);
       setMaxPrice(null);
@@ -142,63 +140,84 @@ export default function TravelPage() {
   };
 
   const passengers = adults + children;
-  const hasSearched = loading || !!result || !!error;
+  const hasSearched = loading || !!result || !!error || categoryUnavailable;
 
   return (
     <div className="min-h-screen bg-[var(--ml-soft)] pb-16 dark:bg-[#0a0f22]">
-      {/* HERO */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-[var(--ml-blue)] via-[var(--ml-blue-2)] to-[var(--ml-blue-deep)] px-4 pb-28 pt-10 text-white sm:px-6 lg:px-8">
-        <div className="pointer-events-none absolute right-0 top-0 select-none text-[9rem] opacity-10" aria-hidden="true">✈️</div>
-        <div className="mx-auto max-w-6xl">
+      {/* HERO premium — plateforme mondiale */}
+      <header className="relative overflow-hidden bg-gradient-to-br from-[#0a1330] via-[var(--ml-blue-2)] to-[#0a1330] px-4 pb-32 pt-10 text-white sm:px-6 lg:px-8">
+        {/* Décor animé (respecte prefers-reduced-motion) */}
+        <div className="pointer-events-none absolute inset-0 select-none" aria-hidden="true">
+          <Globe className="ml-hero-spin absolute -right-16 -top-16 h-96 w-96 text-white/[0.04]" strokeWidth={0.6} />
+          <span className="ml-hero-float absolute right-8 top-16 text-7xl opacity-20 sm:right-24">✈️</span>
+          <span className="ml-hero-float2 absolute left-4 top-40 text-5xl opacity-10">🏨</span>
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--ml-soft)]/0 to-transparent dark:from-[#0a0f22]/0" />
+        </div>
+
+        <div className="relative mx-auto max-w-6xl">
           <div className="flex items-center justify-between gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-yellow-300">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> MaliLink Voyage
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-yellow-300 ring-1 ring-yellow-400/20">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> Plateforme mondiale de voyage
             </span>
-            <Link
-              href="/travel/mes-voyages"
-              className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
-            >
-              <Ticket className="h-3.5 w-3.5" aria-hidden="true" /> Mes voyages
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                href="/travel/partenaire"
+                className="inline-flex items-center gap-2 rounded-full bg-yellow-400/90 px-3 py-1.5 text-xs font-bold text-[var(--ml-blue-deep)] transition hover:bg-yellow-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <Building2 className="h-3.5 w-3.5" aria-hidden="true" /> Espace partenaire
+              </Link>
+              <Link
+                href="/travel/mes-voyages"
+                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+              >
+                <Ticket className="h-3.5 w-3.5" aria-hidden="true" /> Mes voyages
+              </Link>
+            </div>
           </div>
-          <h1 className="mt-5 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">MaliLink Voyage</h1>
-          <p className="mt-2 max-w-xl text-base text-white/75 sm:text-lg">Réservez vos voyages au meilleur prix.</p>
-          <div className="mt-4 flex flex-wrap gap-2 text-2xl" aria-hidden="true">
-            <span>✈️</span><span>🚌</span><span>🚆</span><span>🚖</span><span>🚢</span>
-          </div>
+
+          <h1
+            className="mt-8 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
+            style={{ color: "#ffffff", textShadow: "0 2px 24px rgba(0,0,0,0.45)" }}
+          >
+            Voyagez partout dans le monde
+            <br />
+            avec <span style={{ color: "var(--ml-gold-light)" }}>MaliLink</span>
+          </h1>
+          <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-lg font-semibold sm:text-xl" style={{ color: "#ffffff" }}>
+            <span>Comparez.</span><span className="text-yellow-300">Réservez.</span>
+            <span>Payez.</span><span className="text-yellow-300">Voyagez.</span>
+          </p>
+          <p className="mt-2 text-base text-white/80">
+            Tout avec un seul compte. Un seul Wallet.
+          </p>
         </div>
       </header>
 
       {/* MOTEUR DE RECHERCHE (chevauche le hero) */}
-      <div className="mx-auto -mt-20 max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-20 mx-auto -mt-16 max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-[var(--ml-border)] bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-[#101a36] sm:p-6">
-          {/* Onglets modes */}
-          <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Type de transport">
-            {modes.map((m) => (
+          {/* Onglets catégories — toutes disponibles, sans « Bientôt » */}
+          <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Catégorie de voyage">
+            {CATEGORIES.map((c) => (
               <button
-                key={m.code}
+                key={c.code}
                 type="button"
                 role="tab"
-                aria-selected={mode === m.code}
-                disabled={!m.enabled}
-                onClick={() => m.enabled && setMode(m.code)}
+                aria-selected={category === c.code}
+                onClick={() => {
+                  setCategory(c.code);
+                  setCategoryUnavailable(false);
+                }}
                 className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-semibold transition ${
-                  mode === m.code
+                  category === c.code
                     ? "bg-[var(--ml-blue)] text-white shadow"
-                    : m.enabled
-                    ? "bg-[var(--ml-soft)] text-[var(--ml-text)] hover:bg-[var(--ml-blue)]/10 dark:bg-white/5 dark:text-white/80"
-                    : "cursor-not-allowed bg-[var(--ml-soft)] text-[var(--ml-text-soft)]/50 dark:bg-white/5 dark:text-white/25"
+                    : "bg-[var(--ml-soft)] text-[var(--ml-text)] hover:bg-[var(--ml-blue)]/10 dark:bg-white/5 dark:text-white/80"
                 }`}
-                title={m.enabled ? m.label : `${m.label} — bientôt`}
               >
-                <span aria-hidden="true">{MODE_EMOJI[m.code] || "✈️"}</span>
-                {m.label}
-                {!m.enabled && <span className="text-[10px] font-bold uppercase">·bientôt</span>}
+                <span aria-hidden="true">{c.emoji}</span>
+                {c.label}
               </button>
             ))}
-            <span className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-xl bg-[var(--ml-soft)] px-3.5 py-2 text-sm font-semibold text-[var(--ml-text-soft)]/50 dark:bg-white/5 dark:text-white/25" title="Hôtel — bientôt">
-              🏨 Hôtel<span className="text-[10px] font-bold uppercase">·bientôt</span>
-            </span>
           </div>
 
           {/* Formulaire */}
@@ -252,7 +271,7 @@ export default function TravelPage() {
               <input id="children" type="number" min={0} max={9} value={children} onChange={(e) => setChildren(Math.max(0, Number(e.target.value)))}
                 className="w-full rounded-xl border border-[var(--ml-border)] bg-white px-3 py-2.5 text-sm font-medium text-[var(--ml-text)] outline-none focus:border-[var(--ml-gold)] focus:ring-2 focus:ring-[var(--ml-gold)]/30 dark:border-white/10 dark:bg-white/5 dark:text-white" />
             </div>
-            {mode === "plane" && (
+            {category === "plane" && (
               <div className="lg:col-span-2">
                 <label htmlFor="classe" className="mb-1 block text-xs font-semibold text-[var(--ml-text-soft)] dark:text-white/60">Classe</label>
                 <select id="classe" value={travelClass} onChange={(e) => setTravelClass(e.target.value as (typeof CLASSES)[number])}
@@ -283,6 +302,21 @@ export default function TravelPage() {
             title="Où souhaitez-vous aller ?"
             message="Choisissez votre départ, votre destination et la date, puis lancez la recherche pour comparer les offres des compagnies partenaires."
           />
+        )}
+
+        {categoryUnavailable && (
+          <EmptyState
+            icon={<span className="text-2xl" aria-hidden="true">{selectedCategory.emoji}</span>}
+            title="Aucun partenaire disponible actuellement."
+            message={`La catégorie « ${selectedCategory.label} » ouvre progressivement : dès qu'un partenaire rejoint MaliLink Voyage dans cette catégorie, ses offres apparaîtront ici.`}
+          >
+            <Link
+              href="/travel/partenaire"
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--ml-blue)] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[var(--ml-blue-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ml-gold)]"
+            >
+              <Building2 className="h-4 w-4" /> Devenir partenaire
+            </Link>
+          </EmptyState>
         )}
 
         {loading && (
@@ -317,8 +351,8 @@ export default function TravelPage() {
 
             {result.count === 0 ? (
               <EmptyState
-                title="Aucune offre pour cette recherche"
-                message="Aucune compagnie ne dessert encore ce trajet à cette date. Essayez une autre ville, une autre date, ou un autre mode de transport."
+                title="Aucun partenaire disponible actuellement."
+                message="Aucune compagnie ne dessert encore ce trajet à cette date. Essayez une autre ville, une autre date, ou une autre catégorie."
               />
             ) : (
               <div className="grid gap-6 lg:grid-cols-[260px_1fr]">

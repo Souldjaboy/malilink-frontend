@@ -64,11 +64,30 @@ export type TravelSearchResult = {
 
 async function getJson<T>(path: string): Promise<T> {
   const res = await authFetch(path, { cache: "no-store" });
+  if (res.status === 404) throw new NotFoundError();
   if (!res.ok) {
     const payload = await res.json().catch(() => ({}));
     throw new Error(payload?.error || `Erreur ${res.status}`);
   }
   return res.json();
+}
+
+export class NotFoundError extends Error {
+  constructor() {
+    super("not_found");
+    this.name = "NotFoundError";
+  }
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const res = await authFetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((payload as { error?: string })?.error || `Erreur ${res.status}`);
+  return payload as T;
 }
 
 export async function fetchModes(): Promise<TravelMode[]> {
@@ -127,7 +146,118 @@ export const MODE_EMOJI: Record<string, string> = {
   private: "🚗",
   plane: "✈️",
   train: "🚆",
-  boat: "🚢",
+  boat: "🚤",
   moto: "🏍️",
   helico: "🚁",
+  hotel: "🏨",
+  rental: "🚗",
 };
+
+/**
+ * Catégories affichées dans le moteur de recherche.
+ * TOUJOURS disponibles (aucun libellé « Bientôt ») : une catégorie sans
+ * partenaire renvoie simplement « Aucun partenaire disponible actuellement. ».
+ * `mode` = mode_code interrogé côté /travel/search ; `searchable=false` pour
+ * les catégories hors modèle de trajet (hôtel, location) tant que le backend
+ * dédié n'existe pas.
+ */
+export type TravelCategory = { code: string; label: string; emoji: string; mode?: string; searchable: boolean };
+export const CATEGORIES: TravelCategory[] = [
+  { code: "plane", label: "Avion", emoji: "✈️", mode: "plane", searchable: true },
+  { code: "train", label: "Train", emoji: "🚆", mode: "train", searchable: true },
+  { code: "bus", label: "Bus", emoji: "🚌", mode: "bus", searchable: true },
+  { code: "taxi", label: "Taxi", emoji: "🚖", mode: "taxi", searchable: true },
+  { code: "moto", label: "Moto-taxi", emoji: "🏍️", mode: "moto", searchable: true },
+  { code: "boat", label: "Bateau", emoji: "🚤", mode: "boat", searchable: true },
+  { code: "helico", label: "Hélicoptère", emoji: "🚁", mode: "helico", searchable: true },
+  { code: "hotel", label: "Hôtel", emoji: "🏨", searchable: false },
+  { code: "rental", label: "Location de voiture", emoji: "🚗", searchable: false },
+];
+
+/* ─────────────────────── Espace partenaire (SaaS) ─────────────────────── */
+
+export type TravelCompany = {
+  id: number;
+  name: string;
+  logo_url: string;
+  description: string;
+  phone: string;
+  email: string;
+  rating: number;
+  rating_count: number;
+  status: string;
+  verified: boolean;
+};
+
+export type TravelVehicle = {
+  id: number;
+  name: string;
+  registration: string;
+  mode_code: string;
+  capacity: number;
+  has_ac: boolean;
+  has_wifi: boolean;
+  has_usb: boolean;
+  has_tv: boolean;
+  has_toilet: boolean;
+  state: string;
+  status: string;
+};
+
+export type TravelRoute = {
+  id: number;
+  mode_code: string;
+  origin_city: string;
+  destination_city: string;
+  origin_city_id: number;
+  destination_city_id: number;
+  duration_minutes: number | null;
+  distance_km: number | null;
+  services: string[];
+  status: string;
+};
+
+/** Compagnie du partenaire courant (404 → NotFoundError si aucune). */
+export async function fetchMyCompany(): Promise<TravelCompany> {
+  const data = await getJson<{ company: TravelCompany }>("/travel/partner/company");
+  return data.company;
+}
+
+export async function createCompany(body: {
+  name: string;
+  phone?: string;
+  email?: string;
+  description?: string;
+  logo_url?: string;
+}): Promise<TravelCompany> {
+  const data = await postJson<{ company: TravelCompany }>("/travel/partner/company", body);
+  return data.company;
+}
+
+export async function fetchVehicles(): Promise<TravelVehicle[]> {
+  const data = await getJson<{ vehicles: TravelVehicle[] }>("/travel/partner/vehicles");
+  return data.vehicles || [];
+}
+
+export async function createVehicle(body: Record<string, unknown>): Promise<TravelVehicle> {
+  const data = await postJson<{ vehicle: TravelVehicle }>("/travel/partner/vehicles", body);
+  return data.vehicle;
+}
+
+export async function fetchRoutes(): Promise<TravelRoute[]> {
+  const data = await getJson<{ routes: TravelRoute[] }>("/travel/partner/routes");
+  return data.routes || [];
+}
+
+export async function createRoute(body: Record<string, unknown>): Promise<TravelRoute> {
+  const data = await postJson<{ route: TravelRoute }>("/travel/partner/routes", body);
+  return data.route;
+}
+
+export async function createSchedule(routeId: number, body: Record<string, unknown>) {
+  return postJson<{ schedule: { id: number } }>(`/travel/partner/routes/${routeId}/schedules`, body);
+}
+
+export async function createPrice(routeId: number, body: Record<string, unknown>) {
+  return postJson<{ price: { id: number } }>(`/travel/partner/routes/${routeId}/prices`, body);
+}

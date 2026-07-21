@@ -132,6 +132,7 @@ export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
       title: "Voyage",
       links: [
         { href: "/travel", label: "MaliLink Voyage", icon: Plane, show: moduleEnabled("voyage") },
+        { href: "/travel/partenaire", label: "Gestion des partenaires", icon: Building2, show: moduleEnabled("voyage") },
       ],
     },
     {
