@@ -44,6 +44,9 @@ export default function WalletPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"historique" | "transfert" | "qr">("historique");
+  const [qrAmount, setQrAmount] = useState("");
+  const [qrRequest, setQrRequest] = useState<any>(null);
+  const [payRef, setPayRef] = useState("");
   const [myPhone, setMyPhone] = useState("");
   const [form, setForm] = useState({ to_phone: "", amount: "", note: "" });
   const [sending, setSending] = useState(false);
@@ -101,6 +104,49 @@ export default function WalletPage() {
       }
     } catch {
       setFeedback("Erreur réseau. Aucun montant n'a été débité.");
+    }
+    setSending(false);
+  };
+
+  const createPaymentRequest = async () => {
+    const body: any = {};
+    if (qrAmount && Number(qrAmount) > 0) body.amount = Number(qrAmount);
+    const response = await authFetch("/wallet/payment-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).catch(() => null);
+    const data = await response?.json().catch(() => ({}));
+    if (response?.ok) setQrRequest(data);
+    else setFeedback(data?.error || "Erreur génération QR.");
+  };
+
+  const checkRequest = async (reference: string) => {
+    const response = await authFetch(`/wallet/payment-requests/${reference}`).catch(() => null);
+    const data = await response?.json().catch(() => ({}));
+    if (response?.ok) {
+      setQrRequest(data);
+      if (data.status === "paid") load();
+    }
+  };
+
+  const payByQr = async () => {
+    if (!payRef.trim()) return;
+    setSending(true);
+    setFeedback("");
+    const response = await authFetch("/wallet/pay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference: payRef.trim(), idempotency_key: `qrpay-${payRef.trim()}-${Date.now()}` }),
+    }).catch(() => null);
+    const data = await response?.json().catch(() => ({}));
+    if (response?.ok) {
+      setFeedback(`Paiement effectué ✓ Référence : ${data.reference}`);
+      setPayRef("");
+      setTab("historique");
+      load();
+    } else {
+      setFeedback(data?.error || "Erreur paiement.");
     }
     setSending(false);
   };
@@ -231,18 +277,66 @@ export default function WalletPage() {
 
         {/* Mon QR pour recevoir */}
         {tab === "qr" && !loading && !error && (
-          <div className="mt-4 rounded-2xl bg-white p-6 text-center shadow">
-            <h2 className="font-black text-black">Recevoir un paiement</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Faites scanner ce code : il pré-remplit un transfert vers votre numéro.
-            </p>
-            <div className="mx-auto mt-4 w-fit rounded-2xl border-4 border-[var(--ml-gold,#d4a23c)] p-3">
-              <QRCodeCanvas
-                value={`${typeof window !== "undefined" ? window.location.origin : ""}/wallet?to=${encodeURIComponent(myPhone)}`}
-                size={180}
-              />
+          <div className="mt-4 space-y-4">
+            {/* Demander un paiement (générer un QR) */}
+            <div className="rounded-2xl bg-white p-5 text-center shadow">
+              <h2 className="font-black text-black">Demander un paiement</h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Générez un QR : le payeur le scanne et paie directement depuis son wallet.
+              </p>
+              {!qrRequest ? (
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="number"
+                    value={qrAmount}
+                    onChange={(e) => setQrAmount(e.target.value)}
+                    placeholder="Montant (FCFA) — laisser vide = libre"
+                    className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3 text-black"
+                  />
+                  <button onClick={createPaymentRequest} className="rounded-xl bg-yellow-500 px-5 py-3 font-black text-black">
+                    Générer le QR
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div className="mx-auto mt-4 w-fit rounded-2xl border-4 border-[var(--ml-gold,#d4a23c)] p-3">
+                    <QRCodeCanvas value={qrRequest.reference} size={180} />
+                  </div>
+                  <p className="mt-3 font-mono font-bold text-black">{qrRequest.reference}</p>
+                  <p className="text-sm text-gray-500">
+                    {qrRequest.amount ? formatFCFA(Number(qrRequest.amount)) : "Montant libre"} ·{" "}
+                    <span className={qrRequest.status === "paid" ? "font-bold text-green-600" : "text-gray-500"}>
+                      {qrRequest.status === "paid" ? "Payé ✓" : "En attente"}
+                    </span>
+                  </p>
+                  <div className="mt-3 flex justify-center gap-2">
+                    <button onClick={() => checkRequest(qrRequest.reference)} className="rounded-xl bg-gray-100 px-4 py-2.5 font-bold text-gray-700">
+                      Vérifier le paiement
+                    </button>
+                    <button onClick={() => setQrRequest(null)} className="rounded-xl bg-gray-100 px-4 py-2.5 font-bold text-gray-500">
+                      Nouveau
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="mt-3 font-mono font-bold text-black">{myPhone}</p>
+
+            {/* Payer une demande scannée */}
+            <div className="rounded-2xl bg-white p-5 shadow">
+              <h2 className="font-black text-black">Payer un QR</h2>
+              <p className="mt-1 text-sm text-gray-500">Saisissez la référence MLQR reçue.</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input
+                  value={payRef}
+                  onChange={(e) => setPayRef(e.target.value.trim())}
+                  placeholder="Référence (MLQR-…)"
+                  className="min-w-0 flex-1 rounded-xl border border-gray-200 p-3 font-mono text-black"
+                />
+                <button onClick={payByQr} disabled={sending} className="rounded-xl bg-yellow-500 px-5 py-3 font-black text-black disabled:opacity-50">
+                  {sending ? "Paiement..." : "Payer"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
