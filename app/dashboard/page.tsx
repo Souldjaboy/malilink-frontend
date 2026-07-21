@@ -33,6 +33,7 @@ import {
   Bike,
   Store,
   CreditCard,
+  Plane,
 } from "lucide-react";
 
 import Link from "next/link";
@@ -79,9 +80,9 @@ export default function DashboardPage() {
     if (access === "accounting") {
       setAccessMessage("Accès refusé : module réservé à la comptabilité ou à la direction");
     }
-    const module = new URLSearchParams(window.location.search).get("module");
-    if (module) {
-      setAccessMessage(`Module ${module} désactivé pour cette entreprise.`);
+    const moduleKey = new URLSearchParams(window.location.search).get("module");
+    if (moduleKey) {
+      setAccessMessage(`Module ${moduleKey} désactivé pour cette entreprise.`);
     }
 
     const storedUser = localStorage.getItem("user");
@@ -256,6 +257,7 @@ export default function DashboardPage() {
     education: "education",
     livraison: "livraison",
     social: "social",
+    voyage: "voyage",
     wallet: "wallet",
   };
   const moduleEnabled = (key: string) => {
@@ -298,6 +300,19 @@ export default function DashboardPage() {
           description: "Écoles, élèves, classes, présences, notes et paiements scolaires.",
           icon: GraduationCap,
           show: moduleEnabled("education"),
+        },
+      ],
+    },
+    {
+      key: "voyage",
+      title: "Voyage",
+      cards: [
+        {
+          href: "/travel",
+          title: "MaliLink Voyage",
+          description: "Comparez et réservez bus, avions et taxis au meilleur prix.",
+          icon: Plane,
+          show: moduleEnabled("voyage"),
         },
       ],
     },

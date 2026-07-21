@@ -29,6 +29,7 @@ import {
   Menu,
   MessageCircle,
   Package,
+  Plane,
   QrCode,
   ScanLine,
   Search,
@@ -125,6 +126,12 @@ export default function MaliLinkSidebar(props: MaliLinkSidebarProps) {
         { href: "/social", label: "MaliLink Social", icon: Users, show: moduleEnabled("social") },
         { href: "/notifications", label: "Notifications", icon: Bell, show: moduleEnabled("notifications") },
         { href: "/chat", label: "Chat interne", icon: MessageCircle, show: moduleEnabled("chat") },
+      ],
+    },
+    {
+      title: "Voyage",
+      links: [
+        { href: "/travel", label: "MaliLink Voyage", icon: Plane, show: moduleEnabled("voyage") },
       ],
     },
     {

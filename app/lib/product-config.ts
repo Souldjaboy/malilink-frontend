@@ -34,6 +34,7 @@ export type ProductModule =
   | "livraison"
   | "education"
   | "social"
+  | "voyage"
   | "wallet";
 
 type ProductTheme = {
@@ -107,6 +108,7 @@ const baseModules: Record<ProductModule, boolean> = {
   livraison: false,
   education: false,
   social: false,
+  voyage: false,
   wallet: false,
 };
 
@@ -215,6 +217,8 @@ const configs: Record<AppProduct, ProductConfig> = {
       utilisateurs: true,
       // Réseau social MaliLink (uniquement sur le produit malilink)
       social: true,
+      // MaliLink Voyage : agrégateur de transport (bus, avion, taxi…)
+      voyage: true,
       // Wallet interne (grand livre, transferts internes)
       wallet: true,
     },
@@ -367,6 +371,7 @@ const routeModuleRules: Array<{ prefixes: string[]; module: ProductModule }> = [
   { prefixes: ["/livreur", "/client/livraison"], module: "livraison" },
   { prefixes: ["/education"], module: "education" },
   { prefixes: ["/social"], module: "social" },
+  { prefixes: ["/travel"], module: "voyage" },
   { prefixes: ["/wallet"], module: "wallet" },
 ];
 
