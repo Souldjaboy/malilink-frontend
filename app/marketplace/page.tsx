@@ -192,6 +192,18 @@ export default function MarketplacePage() {
 
       {message && <div className="mb-5 rounded-xl bg-yellow-100 p-4 font-bold text-yellow-800">{message}</div>}
 
+      {/* Voyages et réservations — catalogue transverse (Lot A) */}
+      <Link
+        href="/marketplace/voyages"
+        className="mb-6 flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-br from-[#0f1b3d] to-[#1a3a6b] p-5 text-white shadow transition hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+      >
+        <div>
+          <p className="text-lg font-black" style={{ color: "#ffffff" }}>🧳 Voyages et réservations</p>
+          <p className="text-sm text-white/75">Avion, bus, train, taxi, bateau, hôtel, location… Comparez et réservez.</p>
+        </div>
+        <span className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-black text-[#0f1b3d]">Explorer →</span>
+      </Link>
+
       <div className="mb-6 flex flex-wrap gap-3">
         {publicCategories.map((item) => {
           const Icon = categoryIcons[item] || ShoppingCart;

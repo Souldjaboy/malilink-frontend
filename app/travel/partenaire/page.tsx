@@ -10,7 +10,8 @@ import CityInput from "../components/CityInput";
 import { EmptyState, ErrorState } from "../components/States";
 import {
   fetchMyCompany, createCompany, fetchVehicles, createVehicle, fetchRoutes,
-  createRoute, createSchedule, createPrice, NotFoundError, CATEGORIES, MODE_EMOJI,
+  createRoute, createSchedule, createPrice, publishRoute, unpublishRoute,
+  NotFoundError, CATEGORIES, MODE_EMOJI,
   type TravelCompany, type TravelVehicle, type TravelRoute, type TravelCity,
 } from "../lib/travelApi";
 
@@ -271,6 +272,7 @@ function RoutesTab({ companyId }: { companyId: number }) {
   const [form, setForm] = useState({ mode_code: "bus", duration_minutes: 240, distance_km: "", services: "clim, wifi" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [pubMsg, setPubMsg] = useState("");
 
   const load = () => { setLoading(true); fetchRoutes().then(setItems).catch(() => setItems([])).finally(() => setLoading(false)); };
   useEffect(load, []);
@@ -302,13 +304,19 @@ function RoutesTab({ companyId }: { companyId: number }) {
           : items.length === 0 ? <EmptyState icon={<RouteIcon className="h-7 w-7" />} title="Aucune ligne" message="Créez une ligne pour proposer des trajets à la vente." />
           : items.map((r) => (
             <Card key={r.id}>
-              <p className="font-bold text-[var(--ml-blue)] dark:text-white">{MODE_EMOJI[r.mode_code] || "🚌"} {r.origin_city} → {r.destination_city}</p>
-              <p className="text-xs text-[var(--ml-text-soft)] dark:text-white/50">
-                {r.duration_minutes ? `${Math.floor(r.duration_minutes / 60)}h${String(r.duration_minutes % 60).padStart(2, "0")}` : "—"}
-                {r.distance_km ? ` · ${r.distance_km} km` : ""}{r.services?.length ? ` · ${r.services.join(", ")}` : ""}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-bold text-[var(--ml-blue)] dark:text-white">{MODE_EMOJI[r.mode_code] || "🚌"} {r.origin_city} → {r.destination_city}</p>
+                  <p className="text-xs text-[var(--ml-text-soft)] dark:text-white/50">
+                    {r.duration_minutes ? `${Math.floor(r.duration_minutes / 60)}h${String(r.duration_minutes % 60).padStart(2, "0")}` : "—"}
+                    {r.distance_km ? ` · ${r.distance_km} km` : ""}{r.services?.length ? ` · ${r.services.join(", ")}` : ""}
+                  </p>
+                </div>
+                <PublishToggle route={r} companyId={companyId} onChanged={load} onError={setPubMsg} />
+              </div>
             </Card>
           ))}
+        {pubMsg && <p className="text-sm font-semibold text-red-600 dark:text-red-400">{pubMsg}</p>}
       </div>
       <Card>
         <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-[var(--ml-blue)] dark:text-white"><Plus className="h-4 w-4" /> Ajouter une ligne</h3>
@@ -434,6 +442,41 @@ function SchedulesTab({ companyId }: { companyId: number }) {
       {msg && <p className="text-sm font-semibold text-red-600 dark:text-red-400">{msg}</p>}
       {ok && <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-4 w-4" /> {ok}</p>}
     </div>
+  );
+}
+
+/* ---------- Publication catalogue (Lot A) ---------- */
+function PublishToggle({ route, companyId, onChanged, onError }: {
+  route: TravelRoute; companyId: number; onChanged: () => void; onError: (m: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const published = !!route.published;
+  const toggle = async () => {
+    setBusy(true); onError("");
+    try {
+      if (published) await unpublishRoute(route.id, companyId);
+      else await publishRoute(route.id, companyId);
+      onChanged();
+    } catch (e) {
+      onError(e instanceof Error ? e.message : "Erreur de publication.");
+    } finally { setBusy(false); }
+  };
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={busy}
+      aria-pressed={published}
+      title={published ? "Retirer de Marketplace" : "Publier dans Marketplace"}
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ml-gold)] ${
+        published
+          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300"
+          : "bg-[var(--ml-blue)] text-white hover:bg-[var(--ml-blue-2)]"
+      }`}
+    >
+      {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : published ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Store className="h-3.5 w-3.5" />}
+      {published ? "Publié" : "Publier"}
+    </button>
   );
 }
 

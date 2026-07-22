@@ -215,6 +215,7 @@ export type TravelRoute = {
   distance_km: number | null;
   services: string[];
   status: string;
+  published?: boolean;
 };
 
 /** Compagnie du partenaire courant (404 → NotFoundError si aucune). */
@@ -260,4 +261,50 @@ export async function createSchedule(routeId: number, body: Record<string, unkno
 
 export async function createPrice(routeId: number, body: Record<string, unknown>) {
   return postJson<{ price: { id: number } }>(`/travel/partner/routes/${routeId}/prices`, body);
+}
+
+/** Publie une ligne dans le catalogue Marketplace (Lot A). */
+export async function publishRoute(routeId: number, companyId: number) {
+  return postJson<{ success: boolean }>(`/travel/partner/routes/${routeId}/publish`, { travel_company_id: companyId });
+}
+export async function unpublishRoute(routeId: number, companyId: number) {
+  return postJson<{ success: boolean }>(`/travel/partner/routes/${routeId}/unpublish`, { travel_company_id: companyId });
+}
+
+/* ─────────────────── Catalogue Marketplace (Lot A) ─────────────────── */
+
+export type CatalogOffer = {
+  id: number;
+  related_module: string;
+  related_id: number;
+  company_name: string;
+  category: string;
+  subcategory: string;
+  title: string;
+  description: string;
+  price: number | null;
+  currency: string;
+  availability: number | null;
+  location: string;
+  photos: string[];
+};
+
+export type CatalogCategory = {
+  code: string;
+  label: string;
+  emoji: string;
+  children: { code: string; label: string; emoji: string }[];
+};
+
+export async function fetchCatalogCategories(): Promise<CatalogCategory[]> {
+  const data = await getJson<{ categories: CatalogCategory[] }>("/marketplace/catalog/categories");
+  return data.categories || [];
+}
+
+export async function fetchCatalog(params: { category?: string; subcategory?: string; q?: string }): Promise<{ count: number; counts: Record<string, number>; offers: CatalogOffer[] }> {
+  const sp = new URLSearchParams();
+  if (params.category) sp.set("category", params.category);
+  if (params.subcategory) sp.set("subcategory", params.subcategory);
+  if (params.q) sp.set("q", params.q);
+  return getJson(`/marketplace/catalog?${sp.toString()}`);
 }
