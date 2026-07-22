@@ -101,9 +101,49 @@ export async function fetchCities(query: string): Promise<TravelCity[]> {
   return data.cities || [];
 }
 
+/* ─────────────────── Référentiel mondial des lieux (Lot 1) ─────────────────── */
+
+export type GeoPlace = {
+  id: number | null;              // null = candidat fournisseur non encore persisté
+  name: string;
+  country_code: string;
+  country_name: string;
+  region: string;
+  city: string;
+  latitude: number | null;
+  longitude: number | null;
+  location_type: string;
+  source?: "local" | "provider";
+  external_provider?: string;
+  external_place_id?: string;
+};
+
+/** Autocomplétion mondiale (local + géocodage). */
+export async function geoSearch(query: string): Promise<GeoPlace[]> {
+  const q = encodeURIComponent(query.trim());
+  const data = await getJson<{ results: GeoPlace[] }>(`/travel/geo/search?q=${q}`);
+  return data.results || [];
+}
+
+/** Persiste un lieu choisi (candidat fournisseur) → renvoie le lieu avec un id. */
+export async function persistLocation(place: GeoPlace): Promise<GeoPlace> {
+  const data = await postJson<{ location: GeoPlace }>("/travel/geo/locations", {
+    name: place.name, country_code: place.country_code, country_name: place.country_name,
+    region: place.region, city: place.city, latitude: place.latitude, longitude: place.longitude,
+    location_type: place.location_type, external_provider: place.external_provider,
+    external_place_id: place.external_place_id,
+  });
+  return data.location;
+}
+
+/** Garantit un id : si le lieu vient du fournisseur (id null), on le persiste. */
+export async function ensureLocationId(place: GeoPlace): Promise<GeoPlace> {
+  return place.id != null ? place : persistLocation(place);
+}
+
 export type SearchParams = {
-  originCityId: number;
-  destinationCityId: number;
+  originLocationId: number;
+  destinationLocationId: number;
   date: string;
   adults: number;
   children: number;
@@ -112,8 +152,8 @@ export type SearchParams = {
 
 export async function searchOffers(p: SearchParams): Promise<TravelSearchResult> {
   const params = new URLSearchParams({
-    origin: String(p.originCityId),
-    destination: String(p.destinationCityId),
+    origin: String(p.originLocationId),
+    destination: String(p.destinationLocationId),
     date: p.date,
     adults: String(p.adults),
     children: String(p.children),

@@ -6,13 +6,13 @@ import {
   ArrowLeft, Building2, Bus, Route as RouteIcon, Clock, BarChart3, Ticket,
   Receipt, Store, Upload, ShieldCheck, Star, Plus, Loader2, CheckCircle2,
 } from "lucide-react";
-import CityInput from "../components/CityInput";
+import GeoInput from "../components/GeoInput";
 import { EmptyState, ErrorState } from "../components/States";
 import {
   fetchMyCompany, createCompany, fetchVehicles, createVehicle, fetchRoutes,
   createRoute, createSchedule, createPrice, publishRoute, unpublishRoute,
   NotFoundError, CATEGORIES, MODE_EMOJI,
-  type TravelCompany, type TravelVehicle, type TravelRoute, type TravelCity,
+  type TravelCompany, type TravelVehicle, type TravelRoute, type GeoPlace,
 } from "../lib/travelApi";
 
 const TRANSPORT_MODES = CATEGORIES.filter((c) => c.searchable && c.mode).map((c) => ({ code: c.mode as string, label: c.label }));
@@ -267,9 +267,9 @@ function VehiclesTab({ companyId }: { companyId: number }) {
 function RoutesTab({ companyId }: { companyId: number }) {
   const [items, setItems] = useState<TravelRoute[]>([]);
   const [loading, setLoading] = useState(true);
-  const [origin, setOrigin] = useState<TravelCity | null>(null);
-  const [destination, setDestination] = useState<TravelCity | null>(null);
-  const [form, setForm] = useState({ mode_code: "bus", duration_minutes: 240, distance_km: "", services: "clim, wifi" });
+  const [origin, setOrigin] = useState<GeoPlace | null>(null);
+  const [destination, setDestination] = useState<GeoPlace | null>(null);
+  const [form, setForm] = useState({ mode_code: "bus", duration_minutes: "", distance_km: "", services: "clim, wifi" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [pubMsg, setPubMsg] = useState("");
@@ -278,20 +278,22 @@ function RoutesTab({ companyId }: { companyId: number }) {
   useEffect(load, []);
 
   const submit = async () => {
-    if (!origin || !destination) return setMsg("Choisissez la ville de départ et la destination.");
+    if (!origin?.id || !destination?.id) return setMsg("Sélectionnez un lieu de départ et une destination dans la liste.");
     if (origin.id === destination.id) return setMsg("Départ et destination doivent différer.");
     setSaving(true); setMsg("");
     try {
       await createRoute({
         travel_company_id: companyId,
         mode_code: form.mode_code,
-        origin_city_id: origin.id,
-        destination_city_id: destination.id,
-        duration_minutes: form.duration_minutes,
+        origin_location_id: origin.id,
+        destination_location_id: destination.id,
+        // Vides → distance/durée calculées automatiquement côté serveur.
+        duration_minutes: form.duration_minutes ? Number(form.duration_minutes) : null,
         distance_km: form.distance_km ? Number(form.distance_km) : null,
         services: form.services.split(",").map((s) => s.trim()).filter(Boolean),
       });
       setOrigin(null); setDestination(null);
+      setForm({ ...form, duration_minutes: "", distance_km: "" });
       load();
     } catch (e) { setMsg(e instanceof Error ? e.message : "Erreur."); } finally { setSaving(false); }
   };
@@ -324,16 +326,17 @@ function RoutesTab({ companyId }: { companyId: number }) {
           <select className={inputCls} value={form.mode_code} onChange={(e) => setForm({ ...form, mode_code: e.target.value })} aria-label="Type de transport">
             {TRANSPORT_MODES.map((m) => <option key={m.code} value={m.code}>{m.label}</option>)}
           </select>
-          <CityInput id="route-origin" label="Ville de départ" placeholder="Départ" value={origin} onSelect={setOrigin} />
-          <CityInput id="route-destination" label="Destination" placeholder="Arrivée" value={destination} onSelect={setDestination} />
+          <GeoInput id="route-origin" label="Lieu de départ" placeholder="Ville, aéroport, gare… (partout dans le monde)" value={origin} onSelect={setOrigin} />
+          <GeoInput id="route-destination" label="Destination" placeholder="Ville, aéroport, gare…" value={destination} onSelect={setDestination} />
+          <p className="text-xs text-[var(--ml-text-soft)] dark:text-white/50">Distance et durée sont calculées automatiquement si vous les laissez vides.</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelCls}>Durée (min)</label>
-              <input type="number" min={1} className={inputCls} value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: Number(e.target.value) })} />
+              <label className={labelCls}>Durée (min) — auto</label>
+              <input type="number" min={1} className={inputCls} value={form.duration_minutes} placeholder="auto" onChange={(e) => setForm({ ...form, duration_minutes: e.target.value })} />
             </div>
             <div>
-              <label className={labelCls}>Distance (km)</label>
-              <input type="number" min={0} className={inputCls} value={form.distance_km} onChange={(e) => setForm({ ...form, distance_km: e.target.value })} />
+              <label className={labelCls}>Distance (km) — auto</label>
+              <input type="number" min={0} className={inputCls} value={form.distance_km} placeholder="auto" onChange={(e) => setForm({ ...form, distance_km: e.target.value })} />
             </div>
           </div>
           <div>

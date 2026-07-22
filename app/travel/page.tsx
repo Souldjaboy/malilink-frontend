@@ -6,11 +6,11 @@ import { Search, SlidersHorizontal, Ticket, Sparkles, ArrowLeftRight, Plane, Bui
 import {
   searchOffers,
   CATEGORIES,
-  type TravelCity,
+  type GeoPlace,
   type TravelOffer,
   type TravelSearchResult,
 } from "./lib/travelApi";
-import CityInput from "./components/CityInput";
+import GeoInput from "./components/GeoInput";
 import ResultCard, { type Highlight } from "./components/ResultCard";
 import BookingDrawer from "./components/BookingDrawer";
 import { SkeletonList, EmptyState, ErrorState } from "./components/States";
@@ -27,8 +27,8 @@ export default function TravelPage() {
   const [category, setCategory] = useState<string>("plane");
   const [categoryUnavailable, setCategoryUnavailable] = useState(false);
 
-  const [origin, setOrigin] = useState<TravelCity | null>(null);
-  const [destination, setDestination] = useState<TravelCity | null>(null);
+  const [origin, setOrigin] = useState<GeoPlace | null>(null);
+  const [destination, setDestination] = useState<GeoPlace | null>(null);
   const [dateAller, setDateAller] = useState<string>(tomorrowISO());
   const [dateRetour, setDateRetour] = useState<string>("");
   const [adults, setAdults] = useState(1);
@@ -62,8 +62,8 @@ export default function TravelPage() {
       setCategoryUnavailable(true);
       return;
     }
-    if (!origin || !destination) {
-      setFormError("Choisissez une ville de départ et une destination.");
+    if (!origin?.id || !destination?.id) {
+      setFormError("Choisissez un lieu de départ et une destination dans la liste.");
       return;
     }
     if (origin.id === destination.id) {
@@ -73,8 +73,8 @@ export default function TravelPage() {
     setLoading(true);
     try {
       const data = await searchOffers({
-        originCityId: origin.id,
-        destinationCityId: destination.id,
+        originLocationId: origin.id,
+        destinationLocationId: destination.id,
         date: dateAller,
         adults,
         children,
@@ -223,7 +223,7 @@ export default function TravelPage() {
           {/* Formulaire */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-12">
             <div className="lg:col-span-4">
-              <CityInput id="origin" label="Départ" placeholder="Ville de départ" value={origin} onSelect={setOrigin} />
+              <GeoInput id="origin" label="Départ" placeholder="Ville de départ (partout dans le monde)" value={origin} onSelect={setOrigin} />
             </div>
             <div className="flex items-end justify-center lg:col-span-1">
               <button
@@ -236,7 +236,7 @@ export default function TravelPage() {
               </button>
             </div>
             <div className="lg:col-span-4">
-              <CityInput id="destination" label="Destination" placeholder="Ville d'arrivée" value={destination} onSelect={setDestination} />
+              <GeoInput id="destination" label="Destination" placeholder="Ville d'arrivée" value={destination} onSelect={setDestination} />
             </div>
             <div className="lg:col-span-3">
               <label htmlFor="date-aller" className="mb-1 block text-xs font-semibold text-[var(--ml-text-soft)] dark:text-white/60">Date aller</label>
