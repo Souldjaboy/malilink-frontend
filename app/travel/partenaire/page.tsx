@@ -7,6 +7,7 @@ import {
   Receipt, Store, Upload, ShieldCheck, Star, Plus, Loader2, CheckCircle2,
 } from "lucide-react";
 import GeoInput from "../components/GeoInput";
+import { StatsTab, BookingsTab, PaymentsTab, PosTab, ImportTab } from "./OperationsTabs";
 import { EmptyState, ErrorState } from "../components/States";
 import {
   fetchMyCompany, createCompany, fetchVehicles, createVehicle, fetchRoutes,
@@ -30,14 +31,14 @@ function Card({ children }: { children: React.ReactNode }) {
 }
 
 const TABS = [
-  { key: "vehicules", label: "Véhicules", icon: Bus, live: true },
-  { key: "lignes", label: "Lignes", icon: RouteIcon, live: true },
-  { key: "horaires", label: "Horaires & tarifs", icon: Clock, live: true },
-  { key: "statistiques", label: "Statistiques", icon: BarChart3, live: false },
-  { key: "reservations", label: "Réservations", icon: Ticket, live: false },
-  { key: "paiements", label: "Paiements & factures", icon: Receipt, live: false },
-  { key: "pos", label: "Point de vente", icon: Store, live: false },
-  { key: "imports", label: "Importer des données", icon: Upload, live: false },
+  { key: "vehicules", label: "Véhicules", icon: Bus },
+  { key: "lignes", label: "Lignes", icon: RouteIcon },
+  { key: "horaires", label: "Horaires & tarifs", icon: Clock },
+  { key: "statistiques", label: "Statistiques", icon: BarChart3 },
+  { key: "reservations", label: "Réservations", icon: Ticket },
+  { key: "paiements", label: "Paiements & factures", icon: Receipt },
+  { key: "pos", label: "Point de vente", icon: Store },
+  { key: "imports", label: "Importer des données", icon: Upload },
 ] as const;
 
 export default function PartnerDashboardPage() {
@@ -92,7 +93,6 @@ export default function PartnerDashboardPage() {
                 >
                   <t.icon className="h-4 w-4" aria-hidden="true" />
                   {t.label}
-                  {!t.live && <span className="rounded bg-[var(--ml-gold)]/20 px-1 text-[9px] font-bold uppercase text-[var(--ml-gold-deep)] dark:text-yellow-300">à venir</span>}
                 </button>
               ))}
             </nav>
@@ -101,11 +101,11 @@ export default function PartnerDashboardPage() {
               {tab === "vehicules" && <VehiclesTab companyId={company.id} />}
               {tab === "lignes" && <RoutesTab companyId={company.id} />}
               {tab === "horaires" && <SchedulesTab companyId={company.id} />}
-              {tab === "statistiques" && <ComingSoon title="Statistiques" message="Ventes, revenus, taux de remplissage et destinations populaires seront disponibles ici." icon={<BarChart3 className="h-7 w-7" />} />}
-              {tab === "reservations" && <ComingSoon title="Réservations" message="La liste des réservations et des passagers s'affichera ici dès l'ouverture de la vente (paiement Wallet)." icon={<Ticket className="h-7 w-7" />} />}
-              {tab === "paiements" && <ComingSoon title="Paiements & factures" message="Reversements via le Wallet MaliLink, commissions et factures automatiques arriveront avec le module de paiement." icon={<Receipt className="h-7 w-7" />} />}
-              {tab === "pos" && <ComingSoon title="Point de vente" message="Vendez au guichet : encaissement, impression, scan de billets et reçus. Bientôt disponible." icon={<Store className="h-7 w-7" />} />}
-              {tab === "imports" && <ComingSoon title="Importer des données" message="Synchronisation CSV, Excel, JSON, XML, API REST/GraphQL et connecteurs GDS pour intégrer vos systèmes existants." icon={<Upload className="h-7 w-7" />} />}
+              {tab === "statistiques" && <StatsTab />}
+              {tab === "reservations" && <BookingsTab />}
+              {tab === "paiements" && <PaymentsTab />}
+              {tab === "pos" && <PosTab companyId={company.id} />}
+              {tab === "imports" && <ImportTab />}
             </div>
           </>
         )}
@@ -190,10 +190,6 @@ function RegisterCompany({ onCreated }: { onCreated: (c: TravelCompany) => void 
       </Card>
     </div>
   );
-}
-
-function ComingSoon({ title, message, icon }: { title: string; message: string; icon: React.ReactNode }) {
-  return <EmptyState icon={icon} title={`${title} — bientôt disponible`} message={message} />;
 }
 
 /* ---------- Véhicules ---------- */

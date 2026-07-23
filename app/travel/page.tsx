@@ -139,7 +139,6 @@ export default function TravelPage() {
     });
   };
 
-  const passengers = adults + children;
   const hasSearched = loading || !!result || !!error || categoryUnavailable;
 
   return (
@@ -418,7 +417,7 @@ export default function TravelPage() {
         )}
       </main>
 
-      <BookingDrawer offer={drawerOffer} passengers={passengers} onClose={() => setDrawerOffer(null)} />
+      <BookingDrawer offer={drawerOffer} adults={adults} childrenCount={children} travelDate={dateAller} onClose={() => setDrawerOffer(null)} />
     </div>
   );
 }

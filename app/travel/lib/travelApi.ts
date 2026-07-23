@@ -348,3 +348,83 @@ export async function fetchCatalog(params: { category?: string; subcategory?: st
   if (params.q) sp.set("q", params.q);
   return getJson(`/marketplace/catalog?${sp.toString()}`);
 }
+
+/* ─────────────── Réservation / Paiement Wallet / Billet ─────────────── */
+
+export type TravelTicket = {
+  ticket_number: string;
+  verification_code: string;
+  qr_payload: string;
+  status: string;
+  seat_number?: string;
+};
+export type TravelBooking = {
+  reference: string;
+  travel_date: string;
+  total: number;
+  currency: string;
+  status: string;
+  payment_status: string;
+  origin?: string;
+  destination?: string;
+  company_name?: string;
+};
+
+export async function createTravelBooking(body: {
+  route_id: number; schedule_id?: number | null; travel_date: string;
+  seat_class?: string; adults: number; children: number;
+  passengers: { first_name: string; last_name: string; phone?: string; email?: string }[];
+}): Promise<TravelBooking> {
+  const data = await postJson<{ booking: TravelBooking }>("/travel/bookings", body);
+  return data.booking;
+}
+export async function payTravelBooking(reference: string): Promise<{ booking: TravelBooking; ticket: TravelTicket }> {
+  return postJson<{ booking: TravelBooking; ticket: TravelTicket }>(`/travel/bookings/${reference}/pay`, {});
+}
+export async function fetchMyTrips(): Promise<(TravelBooking & { ticket_number?: string; verification_code?: string; qr_payload?: string; ticket_status?: string })[]> {
+  const data = await getJson<{ bookings: (TravelBooking & { ticket_number?: string })[] }>("/travel/bookings/mine");
+  return data.bookings || [];
+}
+export async function cancelTravelBooking(reference: string) {
+  return postJson<{ success: boolean }>(`/travel/bookings/${reference}/cancel`, {});
+}
+
+/* ─────────────── Partenaire : réservations / stats / paiements / scan / POS ─────────────── */
+
+export type PartnerStats = {
+  vehicles: number; routes: number; schedules: number; seats_total: number;
+  bookings_paid: number; bookings_pending: number; bookings_cancelled: number;
+  seats_sold: number; revenue: number; commission: number; vendor_net: number; fill_rate: number;
+  top_routes: { origin: string; destination: string; sales: number }[];
+};
+export async function fetchPartnerStats(): Promise<PartnerStats | null> {
+  const data = await getJson<{ stats: PartnerStats | null }>("/travel/partner/stats");
+  return data.stats;
+}
+export type PartnerBooking = {
+  reference: string; travel_date: string; seats_count: number; total: number; commission: number;
+  currency: string; status: string; payment_status: string; channel: string; created_at: string;
+  origin?: string; destination?: string; passenger?: string; phone?: string;
+  ticket_number?: string; verification_code?: string; ticket_status?: string;
+};
+export async function fetchPartnerBookings(params: { status?: string; q?: string } = {}): Promise<PartnerBooking[]> {
+  const sp = new URLSearchParams();
+  if (params.status) sp.set("status", params.status);
+  if (params.q) sp.set("q", params.q);
+  const data = await getJson<{ bookings: PartnerBooking[] }>(`/travel/partner/bookings?${sp.toString()}`);
+  return data.bookings || [];
+}
+export async function fetchPartnerPayments(): Promise<{ reference: string; total: number; commission: number; vendor_net: number; currency: string; payment_method: string; paid_at: string; origin?: string; destination?: string }[]> {
+  const data = await getJson<{ payments: { reference: string; total: number }[] }>("/travel/partner/payments");
+  return (data.payments as never) || [];
+}
+export async function fetchConnectors(): Promise<{ code: string; label: string; enabled: boolean; is_real_money: boolean }[]> {
+  const data = await getJson<{ connectors: { code: string; label: string; enabled: boolean; is_real_money: boolean }[] }>("/travel/partner/connectors");
+  return data.connectors || [];
+}
+export async function scanTicket(code: string): Promise<{ valid: boolean; result: string; origin?: string; destination?: string; company?: string; travel_date?: string; boarded?: boolean }> {
+  return postJson("/travel/partner/scan", { code });
+}
+export async function posSell(body: Record<string, unknown>): Promise<{ booking: TravelBooking; ticket: TravelTicket }> {
+  return postJson<{ booking: TravelBooking; ticket: TravelTicket }>("/travel/partner/pos/sell", body);
+}
