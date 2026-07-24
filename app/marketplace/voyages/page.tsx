@@ -116,7 +116,7 @@ export default function MarketplaceVoyagesPage() {
                     <div>
                       {o.price != null && <><span className="text-[11px] text-[var(--ml-text-soft)] dark:text-white/50">dès </span><span className="text-lg font-black text-[var(--ml-gold-deep)] dark:text-yellow-400">{formatFCFA(o.price)}</span></>}
                     </div>
-                    <Link href="/travel" className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--ml-blue)] px-4 py-2 text-sm font-bold text-white transition hover:bg-[var(--ml-blue-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ml-gold)]">
+                    <Link href={`/marketplace/voyages/${o.id}`} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--ml-blue)] px-4 py-2 text-sm font-bold text-white transition hover:bg-[var(--ml-blue-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ml-gold)]">
                       Réserver
                     </Link>
                   </div>

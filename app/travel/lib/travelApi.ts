@@ -336,6 +336,26 @@ export type CatalogCategory = {
   children: { code: string; label: string; emoji: string }[];
 };
 
+export type OfferDetail = {
+  offer: CatalogOffer;
+  route: {
+    id: number; mode_code: string; duration_minutes: number | null; distance_km: number | null;
+    services: string[]; baggage_policy: string; cancellation_policy: string; description: string; currency: string;
+    company_name: string; logo_url: string; company_phone: string; rating: number; rating_count: number;
+    origin: string; origin_lat: number | null; origin_lng: number | null; origin_country: string;
+    destination: string; dest_lat: number | null; dest_lng: number | null; dest_country: string;
+  };
+  departures: {
+    schedule_id: number; departure_time: string | null; arrival_time: string | null; days_of_week: number[];
+    seats_total: number; seats_available: number; base_price: number | null; child_price: number | null; status: string;
+  }[];
+};
+
+/** Détail public d'une offre catalogue (page de réservation). */
+export async function fetchOfferDetail(catalogId: string | number): Promise<OfferDetail> {
+  return getJson<OfferDetail>(`/travel/offer/${catalogId}`);
+}
+
 export async function fetchCatalogCategories(): Promise<CatalogCategory[]> {
   const data = await getJson<{ categories: CatalogCategory[] }>("/marketplace/catalog/categories");
   return data.categories || [];
