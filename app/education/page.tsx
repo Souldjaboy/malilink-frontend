@@ -19,6 +19,7 @@ const NAV = [
   { href: "/education/presences", label: "Présences", desc: "Scan QR, appel, retards, absences", icon: "✅" },
   { href: "/education/notes", label: "Notes & bulletins", desc: "Évaluations, moyennes, rangs", icon: "📝" },
   { href: "/education/paiements", label: "Paiements scolaires", desc: "Frais, reçus, impayés", icon: "💰" },
+  { href: "/education/parametres", label: "Années & périodes", desc: "Années scolaires, trimestres, semestres", icon: "🗓️" },
   { href: "/education/parent", label: "Espace parent", desc: "Suivi de mes enfants", icon: "👨‍👩‍👧" },
 ];
 

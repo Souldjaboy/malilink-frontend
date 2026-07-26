@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetch } from "../../lib/api";
+import QrScanner from "../components/QrScanner";
 
 type ClassItem = { id: number; name: string };
 type Student = { id: number; first_name: string; last_name: string; matricule: string };
@@ -26,6 +27,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function EducationPresencesPage() {
   const [qrInput, setQrInput] = useState("");
   const [scanResult, setScanResult] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [selectedClass, setSelectedClass] = useState("");
   const [students, setStudents] = useState<Student[]>([]);
@@ -53,24 +55,36 @@ export default function EducationPresencesPage() {
     });
   }, [selectedClass]);
 
-  const scan = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Enregistre une présence à partir d'un code badge (caméra, lecteur physique
+  // ou saisie manuelle). La validation reste côté serveur (/attendance/scan).
+  const registerScan = useCallback(async (code: string) => {
+    const value = code.trim();
+    if (!value) return;
     setScanResult("");
     const res = await authFetch("/education/attendance/scan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ qr_code: qrInput.trim() }),
+      body: JSON.stringify({ qr_code: value }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setScanResult(`❌ ${data?.error || "Erreur"}`);
+      setScanResult(`❌ ${data?.error || "Badge invalide"}`);
     } else {
+      const late = data.attendance?.status === "retard";
+      const dup = data.already_recorded || data.duplicate;
       setScanResult(
-        `✅ ${data.student.first_name} ${data.student.last_name} — ${data.attendance?.status === "retard" ? "EN RETARD" : "présent(e)"}`
+        dup
+          ? `ℹ️ ${data.student.first_name} ${data.student.last_name} — présence déjà enregistrée`
+          : `✅ ${data.student.first_name} ${data.student.last_name} — ${late ? "EN RETARD" : "présent(e)"}`
       );
     }
     setQrInput("");
     await loadToday();
+  }, [loadToday]);
+
+  const scan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await registerScan(qrInput);
   };
 
   const submitRollCall = async () => {
@@ -98,11 +112,22 @@ export default function EducationPresencesPage() {
 
         <section className="rounded-2xl bg-white p-6 shadow">
           <h2 className="text-xl font-black text-gray-900">Scan badge QR (entrée / tablette)</h2>
+
+          {/* Méthode 1 — scan caméra (html5-qrcode) */}
+          <button
+            type="button"
+            onClick={() => setCameraOpen(true)}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 py-3 font-black text-white hover:bg-blue-800 sm:w-auto"
+          >
+            📷 Ouvrir la caméra
+          </button>
+
+          {/* Méthodes 2 & 3 — lecteur QR physique (clavier) et saisie manuelle */}
           <form onSubmit={scan} className="mt-3 flex gap-2">
             <input
               value={qrInput}
               onChange={(e) => setQrInput(e.target.value)}
-              placeholder="Scanner ou saisir le code du badge (EDU-...)"
+              placeholder="Scanner (lecteur physique) ou saisir le code du badge (EDU-…)"
               className="flex-1 rounded-xl border border-gray-300 p-3 font-mono text-gray-900"
               autoFocus
             />
@@ -111,9 +136,20 @@ export default function EducationPresencesPage() {
             </button>
           </form>
           {scanResult && <p className="mt-3 rounded-xl bg-gray-50 p-3 font-bold text-gray-900">{scanResult}</p>}
-          <p className="mt-2 text-sm text-gray-500">
-            Compatible lecteur QR physique (saisie clavier automatique) et scan caméra via la page Scanner.
+          <p className="mt-2 text-sm text-gray-600">
+            3 méthodes : caméra du téléphone/tablette, lecteur QR USB/Bluetooth (saisie clavier automatique + Entrée), ou saisie manuelle du code.
           </p>
+
+          {cameraOpen && (
+            <QrScanner
+              title="Scanner le badge élève"
+              onClose={() => setCameraOpen(false)}
+              onDecode={(text) => {
+                setCameraOpen(false);
+                registerScan(text);
+              }}
+            />
+          )}
         </section>
 
         <section className="rounded-2xl bg-white p-6 shadow">

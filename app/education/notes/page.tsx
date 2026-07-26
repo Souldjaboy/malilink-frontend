@@ -109,6 +109,18 @@ export default function EducationNotesPage() {
 
         {message && <p className="rounded-xl bg-blue-50 p-3 font-semibold text-blue-800">{message}</p>}
 
+        {/* §31 : cause réelle du sélecteur Période vide + action directe. */}
+        {terms.length === 0 && (
+          <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:flex-row sm:items-center">
+            <p className="font-semibold text-amber-900">
+              Aucune période scolaire n&apos;a encore été créée. Sans période, impossible de créer une évaluation ou de générer les bulletins.
+            </p>
+            <Link href="/education/parametres" className="whitespace-nowrap rounded-xl bg-amber-600 px-4 py-2 font-black text-white hover:bg-amber-700">
+              Créer une période
+            </Link>
+          </div>
+        )}
+
         <section className="rounded-2xl bg-white p-6 shadow">
           <h2 className="text-xl font-black text-gray-900">Nouvelle évaluation</h2>
           <form onSubmit={createExam} className="mt-3 grid gap-3 md:grid-cols-6">
