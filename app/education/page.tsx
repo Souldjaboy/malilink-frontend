@@ -18,6 +18,7 @@ const NAV = [
   { href: "/education/classes", label: "Classes & matières", desc: "Niveaux, coefficients, professeurs", icon: "🏫" },
   { href: "/education/professeurs", label: "Professeurs", desc: "Fiches, matricules, spécialités", icon: "👨‍🏫" },
   { href: "/education/affectations", label: "Affectations", desc: "Prof ↔ matière ↔ classe, coefficients", icon: "🔗" },
+  { href: "/education/emploi-du-temps", label: "Emploi du temps", desc: "Horaires, salles, détection des conflits", icon: "📅" },
   { href: "/education/presences", label: "Présences", desc: "Scan QR, appel, retards, absences", icon: "✅" },
   { href: "/education/notes", label: "Notes & bulletins", desc: "Évaluations, moyennes, rangs", icon: "📝" },
   { href: "/education/paiements", label: "Paiements scolaires", desc: "Frais, reçus, impayés", icon: "💰" },
