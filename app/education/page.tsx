@@ -16,6 +16,7 @@ type Dashboard = {
 const NAV = [
   { href: "/education/eleves", label: "Élèves & badges QR", desc: "Inscriptions, matricules, badges", icon: "🎓" },
   { href: "/education/classes", label: "Classes & matières", desc: "Niveaux, coefficients, professeurs", icon: "🏫" },
+  { href: "/education/professeurs", label: "Professeurs", desc: "Fiches, matricules, spécialités", icon: "👨‍🏫" },
   { href: "/education/presences", label: "Présences", desc: "Scan QR, appel, retards, absences", icon: "✅" },
   { href: "/education/notes", label: "Notes & bulletins", desc: "Évaluations, moyennes, rangs", icon: "📝" },
   { href: "/education/paiements", label: "Paiements scolaires", desc: "Frais, reçus, impayés", icon: "💰" },
