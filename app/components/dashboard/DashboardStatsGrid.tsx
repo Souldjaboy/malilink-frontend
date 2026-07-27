@@ -18,12 +18,27 @@ function hasValue(value: StatCardData["value"]): boolean {
   return value !== null && value !== undefined && value !== "";
 }
 
+/**
+ * Colonnes calées sur le nombre de cartes pour éviter toute cellule vide en fin
+ * de ligne (ex. 4 cartes ne doivent pas laisser un trou dans une grille de 5).
+ * Chaînes littérales pour la détection Tailwind.
+ */
+const COLS: Record<number, string> = {
+  1: "sm:grid-cols-2 xl:grid-cols-2",
+  2: "sm:grid-cols-2 xl:grid-cols-2",
+  3: "sm:grid-cols-3 xl:grid-cols-3",
+  4: "sm:grid-cols-2 xl:grid-cols-4",
+  5: "sm:grid-cols-3 xl:grid-cols-5",
+};
+
 export default function DashboardStatsGrid({ stats }: { stats: StatCardData[] }) {
   const visible = stats.filter((stat) => hasValue(stat.value));
   if (visible.length === 0) return null;
 
+  const cols = COLS[Math.min(visible.length, 5)] ?? COLS[5];
+
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 xl:grid-cols-5">
+    <div className={`grid grid-cols-2 gap-3 md:gap-4 ${cols}`}>
       {visible.map((stat) => {
         const Icon = stat.icon;
         return (
