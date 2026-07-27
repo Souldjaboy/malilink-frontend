@@ -140,6 +140,19 @@ export default function ParametresPage() {
       body: JSON.stringify(formData),
     });
 
+    // Mise à jour immédiate du sidebar / header (sans reconnexion) : le hook
+    // useCurrentCompanyIdentity écoute cet événement.
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("malilink-company-updated", {
+          detail: {
+            company_name: formData.company_name,
+            logo_url: formData.logo_url,
+          },
+        })
+      );
+    }
+
     setMessage("Paramètres entreprise enregistrés avec succès.");
   };
 

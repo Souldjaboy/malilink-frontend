@@ -29,23 +29,35 @@ import {
   Settings,
   LogOut,
   GraduationCap,
-  Truck,
-  Bike,
-  Store,
   CreditCard,
-  Plane,
+  AlertTriangle,
+  PackageCheck,
 } from "lucide-react";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authFetch } from "../lib/api";
-import { appProduct, isProductModuleEnabled, productConfig, type ProductModule } from "../lib/product-config";
+import { appProduct, productConfig } from "../lib/product-config";
 import AIChatWidget from "../components/AIChatWidget";
-import MaliLinkSidebar from "../components/MaliLinkSidebar";
 import InstallPWAButton from "../../components/InstallPWAButton";
 import TrialBanner from "../../components/TrialBanner";
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
+import MaliLinkDashboardLayout from "../components/dashboard/MaliLinkDashboardLayout";
+import DashboardStatsGrid from "../components/dashboard/DashboardStatsGrid";
+import DashboardModuleSection from "../components/dashboard/DashboardModuleSection";
+import {
+  createModuleEnabled,
+  filterGroups,
+  orderSectionsForBusiness,
+  normalizeBusinessType,
+  DASHBOARD_SECTIONS,
+} from "../components/dashboard/dashboardModules";
+import {
+  useCurrentCompanyIdentity,
+  clearCompanyIdentityCache,
+} from "../components/dashboard/useCurrentCompanyIdentity";
+import type { PermissionFlags, StatCardData } from "../components/dashboard/dashboardTypes";
 import {
   BarChart,
   Bar,
@@ -65,9 +77,9 @@ export default function DashboardPage() {
 
   const [userData, setUserData] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
-  const [companyIdentity, setCompanyIdentity] = useState<any>(null);
   const [statsError, setStatsError] = useState("");
   const [accessMessage, setAccessMessage] = useState("");
+  const identity = useCurrentCompanyIdentity();
 
   useEffect(() => {
     const access = new URLSearchParams(window.location.search).get("access");
@@ -86,7 +98,6 @@ export default function DashboardPage() {
     }
 
     const storedUser = localStorage.getItem("user");
-
     if (storedUser) {
       setUserData(JSON.parse(storedUser));
     }
@@ -94,17 +105,13 @@ export default function DashboardPage() {
 
   const fetchStats = async () => {
     try {
-      const response = await authFetch("/dashboard-stats", {
-        cache: "no-store",
-      });
+      const response = await authFetch("/dashboard-stats", { cache: "no-store" });
       const data = await response.json().catch(() => ({}));
-
       if (!response.ok) {
         setStatsError(data.error || "Erreur chargement tableau de bord.");
         setStats({});
         return;
       }
-
       setStats(data);
     } catch (error) {
       console.error(error);
@@ -117,22 +124,13 @@ export default function DashboardPage() {
     fetchStats();
   }, []);
 
-  useEffect(() => {
-    authFetch("/company-settings/current", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((data) => setCompanyIdentity(data || null))
-      .catch(() => setCompanyIdentity(null));
-  }, []);
-
-  // Indicateurs métier réels (MaliLink) : on interroge le dashboard du
-  // module correspondant au business_type de l'entreprise.
+  // Indicateurs métier réels (MaliLink) : on interroge le dashboard du module
+  // correspondant au business_type de l'entreprise.
   const [businessStats, setBusinessStats] = useState<any>(null);
+  const businessType = identity.businessType;
   useEffect(() => {
     if (appProduct !== "malilink") return;
-    const raw = String(companyIdentity?.business_type || "")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+    const raw = normalizeBusinessType(businessType);
     let kind = "";
     if (raw.includes("ecole") || raw.includes("education")) kind = "education";
     else if (raw.includes("restaurant")) kind = "restaurant";
@@ -153,17 +151,72 @@ export default function DashboardPage() {
         if (data) setBusinessStats({ kind, data });
       })
       .catch(() => {});
-  }, [companyIdentity?.business_type]);
+  }, [businessType]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    clearCompanyIdentityCache();
     document.cookie = "triangle_token=; path=/; max-age=0";
     document.cookie = "triangle_super_admin=; path=/; max-age=0";
     document.cookie = "triangle_subscription_status=; path=/; max-age=0";
     document.cookie = "triangle_modules=; path=/; max-age=0";
     router.push("/login");
   };
+
+  // ----- Permissions (calculées à partir du rôle) -----
+  const role = String(userData?.role || "").toLowerCase();
+  const isSuperAdmin =
+    userData?.is_super_admin === true ||
+    userData?.is_super_admin === "true" ||
+    userData?.is_super_admin === 1 ||
+    role === "super_admin";
+  const isAdminLike = isSuperAdmin || role === "admin";
+  const isWarehouseManager =
+    role === "responsable_entrepot" ||
+    role === "chef_entrepot" ||
+    role === "responsable d'entrepôt";
+  const isReadOnlyRole = role === "direction" || role === "client";
+  const isDirectionRole = role === "direction" || role === "directeur";
+  const isAccountingRole = role === "comptable";
+  const canManageWarehouse = isAdminLike || isWarehouseManager;
+  const canViewDirectionModules = isAdminLike || isDirectionRole;
+  const canViewAccounting = isAdminLike || isDirectionRole || isAccountingRole;
+  const canUsePos = isAdminLike || role === "caissier" || role === "vendeur" || role === "direction";
+
+  const permissions: PermissionFlags = useMemo(
+    () => ({
+      isSuperAdmin,
+      isAdminLike,
+      canManageWarehouse,
+      canViewDirectionModules,
+      canViewAccounting,
+      canUsePos,
+      isReadOnlyRole,
+    }),
+    [isSuperAdmin, isAdminLike, canManageWarehouse, canViewDirectionModules, canViewAccounting, canUsePos, isReadOnlyRole]
+  );
+
+  const companyModules = userData?.modules || {};
+  const moduleEnabled = useMemo(
+    () => createModuleEnabled(companyModules, isSuperAdmin),
+    [companyModules, isSuperAdmin]
+  );
+
+  // Identité affichée (source de vérité = hook entreprise).
+  const displayCompanyName =
+    identity.companyName ||
+    (isSuperAdmin && !userData?.company_id ? "Plateforme globale" : userData?.company_name) ||
+    productConfig.name;
+  const displayLogoUrl = identity.companyLogoUrl || "";
+  const displayPlanName =
+    identity.planName ||
+    (isSuperAdmin && !userData?.company_id ? "Administrateur système" : userData?.plan_name) ||
+    "";
+  const displaySubscriptionStatus =
+    identity.subscriptionStatus ||
+    (isSuperAdmin && !userData?.company_id ? "Illimité" : userData?.subscription_status) ||
+    "";
 
   if (!stats) {
     return (
@@ -176,12 +229,14 @@ export default function DashboardPage() {
   if (statsError) {
     return (
       <div className="min-h-screen bg-gray-100 p-8 text-black">
-        <div className="bg-red-100 text-red-700 p-4 rounded-xl font-bold">
-          {statsError}
-        </div>
+        <div className="bg-red-100 text-red-700 p-4 rounded-xl font-bold">{statsError}</div>
       </div>
     );
   }
+
+  // ----- Données dérivées (graphiques legacy) -----
+  const derniersMouvements: any[] = stats.derniers_mouvements || [];
+  const activitesRecentes: any[] = stats.activites_recentes || [];
 
   const alertData = [
     { name: "Stock faible", value: stats.stock_faible || 0 },
@@ -199,328 +254,223 @@ export default function DashboardPage() {
     { name: "Inventaires", value: stats.total_inventaires || 0 },
   ];
 
-  const movementData = (stats.derniers_mouvements || []).map(
-    (movement: any, index: number) => ({
-      name: `M${index + 1}`,
-      quantité: Number(movement.quantity || 0),
-    })
+  const movementData = derniersMouvements.map((movement: any, index: number) => ({
+    name: `M${index + 1}`,
+    quantité: Number(movement.quantity || 0),
+  }));
+
+  const hasLogisticsData =
+    Boolean(stats.total_produits) ||
+    Boolean(stats.total_stock) ||
+    Boolean(stats.total_entrepots) ||
+    derniersMouvements.length > 0;
+
+  // ----- Cartes de statistiques (n'affiche que les valeurs disponibles) -----
+  const coreStats: StatCardData[] = [
+    { key: "produits", label: "Produits", value: stats.total_produits, icon: Boxes, tone: "blue" },
+    { key: "stock", label: "Stock total", value: stats.total_stock, icon: Package, tone: "gold" },
+    { key: "commandes", label: "Commandes", value: stats.total_commandes ?? stats.total_orders, icon: ShoppingCart, tone: "navy" },
+    { key: "utilisateurs", label: "Utilisateurs", value: stats.total_utilisateurs, icon: Users, tone: "slate" },
+    { key: "entrepots", label: "Entrepôts", value: stats.total_entrepots, icon: Warehouse, tone: "green" },
+    { key: "inventaires", label: "Inventaires", value: stats.total_inventaires, icon: ClipboardList, tone: "purple" },
+    { key: "stock_faible", label: "Stock faible", value: stats.stock_faible, icon: AlertTriangle, tone: "orange" },
+    { key: "rupture", label: "Rupture stock", value: stats.rupture_stock, icon: TriangleAlert, tone: "red" },
+    { key: "alertes", label: "Alertes", value: stats.alertes, icon: Bell, tone: "red" },
+  ];
+
+  const businessStatCards: StatCardData[] = (() => {
+    if (!businessStats) return [];
+    const d = businessStats.data || {};
+    switch (businessStats.kind) {
+      case "education":
+        return [
+          { key: "eleves", label: "Élèves actifs", value: d.total_students, icon: GraduationCap, tone: "blue" },
+          { key: "presents", label: "Présents aujourd'hui", value: d.today?.presents, icon: PackageCheck, tone: "green" },
+          { key: "retards", label: "Retards", value: d.today?.retards, icon: AlertTriangle, tone: "orange" },
+          { key: "absents", label: "Absents", value: d.today?.absents, icon: TriangleAlert, tone: "red" },
+        ];
+      case "restaurant":
+        return [
+          { key: "menu", label: "Plats au menu", value: d.menu?.total, icon: Utensils, tone: "blue" },
+          { key: "orders", label: "Commandes", value: d.orders?.total, icon: ShoppingCart, tone: "green" },
+          { key: "prep", label: "En préparation", value: d.orders?.preparation, icon: Activity, tone: "orange" },
+          { key: "tables", label: "Tables occupées", value: d.tables?.occupees, icon: LayoutDashboard, tone: "purple" },
+        ];
+      case "automobile":
+        return [
+          { key: "veh", label: "Véhicules", value: d.vehicles?.total, icon: Car, tone: "blue" },
+          { key: "dispo", label: "Disponibles", value: d.vehicles?.disponibles, icon: PackageCheck, tone: "green" },
+          { key: "loues", label: "Loués", value: d.vehicles?.loues, icon: Activity, tone: "orange" },
+          { key: "vendus", label: "Vendus", value: d.vehicles?.vendus, icon: CreditCard, tone: "purple" },
+        ];
+      case "immobilier":
+        return [
+          { key: "biens", label: "Biens", value: d.properties?.total, icon: Building2, tone: "blue" },
+          { key: "dispo", label: "Disponibles", value: d.properties?.disponibles, icon: PackageCheck, tone: "green" },
+          { key: "loues", label: "Loués", value: d.properties?.loues, icon: Activity, tone: "orange" },
+          { key: "resa", label: "Réservations", value: d.reservations?.total, icon: LayoutDashboard, tone: "purple" },
+        ];
+      default:
+        return [];
+    }
+  })();
+
+  // ----- Sections de modules (filtrées + ordonnées par activité) -----
+  const filteredSections = filterGroups(DASHBOARD_SECTIONS, moduleEnabled, permissions);
+  const { sections: orderedSections, matched: businessMatched } = orderSectionsForBusiness(
+    filteredSections,
+    identity.businessType
   );
 
-  const role = String(userData?.role || "").toLowerCase();
-  const isSuperAdmin =
-    userData?.is_super_admin === true ||
-    userData?.is_super_admin === "true" ||
-    userData?.is_super_admin === 1 ||
-    role === "super_admin";
-  const isAdminLike =
-    isSuperAdmin ||
-    role === "admin" ||
-    role === "super_admin";
-  const isWarehouseManager =
-    role === "responsable_entrepot" ||
-    role === "chef_entrepot" ||
-    role === "responsable d'entrepôt";
-  const isReadOnlyRole = role === "direction" || role === "client";
-  const isDirectionRole = role === "direction" || role === "directeur";
-  const isAccountingRole = role === "comptable";
-  const canManageWarehouse = isAdminLike || isWarehouseManager;
-  const canViewDirectionModules = isAdminLike || isDirectionRole;
-  const canViewAccounting = isAdminLike || isDirectionRole || isAccountingRole;
-  const canUsePos = isAdminLike || role === "caissier" || role === "vendeur" || role === "direction";
-  const modules = userData?.modules || {};
-  const productModuleByDashboardKey: Record<string, ProductModule> = {
-    ia: "ia",
-    marketplace: "marketplace",
-    automobile: "automobile",
-    immobilier: "immobilier",
-    hotel: "immobilier",
-    restaurant: "restaurants",
-    laboratoire: "laboratoire",
-    pos: "pos",
-    comptabilite: "comptabilite",
-    stock: "stock",
-    produits: "stock",
-    inventaire: "stock",
-    entrepots: "entrepots",
-    emplacements: "entrepots",
-    pointage: "pointage",
-    documents: "documents",
-    rapports: "rapports",
-    crm: "crm",
-    partenaires: "crm",
-    utilisateurs: "utilisateurs",
-    badges: "badges",
-    notifications: "notifications",
-    alertes: "notifications",
-    chat: "chat",
-    activites: "logistique",
-    education: "education",
-    livraison: "livraison",
-    social: "social",
-    voyage: "voyage",
-    wallet: "wallet",
-  };
-  const moduleEnabled = (key: string) => {
-    const productModule = productModuleByDashboardKey[key];
-    if (productModule && !isProductModuleEnabled(productModule)) return false;
-    return modules[key] !== false || isSuperAdmin;
-  };
-  const displayCompanyName =
-    companyIdentity?.company_name ||
-    (isSuperAdmin && !userData?.company_id ? "Plateforme globale" : userData?.company_name) ||
-    productConfig.name;
-  const displayLogoUrl = companyIdentity?.logo_url || "";
-  const displayPlanName =
-    companyIdentity?.plan_name ||
-    (isSuperAdmin && !userData?.company_id ? "Administrateur système" : userData?.plan_name) ||
-    "";
-  const displaySubscriptionStatus =
-    companyIdentity?.subscription_status ||
-    (isSuperAdmin && !userData?.company_id ? "Illimité" : userData?.subscription_status) ||
-    "";
+  // ==================== MALILINK : nouveau tableau de bord ====================
+  if (appProduct === "malilink") {
+    return (
+      <MaliLinkDashboardLayout
+        identity={identity}
+        moduleEnabled={moduleEnabled}
+        permissions={permissions}
+        onLogout={handleLogout}
+      >
+        <TrialBanner user={userData} />
 
-  const businessTypeLabel = String(companyIdentity?.business_type || "").trim();
-  const businessTypeNormalized = businessTypeLabel
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+        {accessMessage && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 font-semibold text-red-700">
+            {accessMessage}
+          </div>
+        )}
 
-  const moduleCategories: Array<{
-    key: string;
-    title: string;
-    cards: Array<{ href: string; title: string; description: string; icon: any; show: boolean }>;
-  }> = [
-    {
-      key: "education",
-      title: "École / Éducation",
-      cards: [
-        {
-          href: "/education",
-          title: "Éducation",
-          description: "Écoles, élèves, classes, présences, notes et paiements scolaires.",
-          icon: GraduationCap,
-          show: moduleEnabled("education"),
-        },
-      ],
-    },
-    {
-      key: "voyage",
-      title: "Voyage",
-      cards: [
-        {
-          href: "/travel",
-          title: "MaliLink Voyage",
-          description: "Comparez et réservez bus, avions et taxis au meilleur prix.",
-          icon: Plane,
-          show: moduleEnabled("voyage"),
-        },
-      ],
-    },
-    {
-      key: "commerce",
-      title: "Commerce / Marketplace",
-      cards: [
-        {
-          href: "/marketplace",
-          title: "Marketplace",
-          description: "Vendez et achetez sur la marketplace multi-vendeurs MaliLink.",
-          icon: Store,
-          show: moduleEnabled("marketplace"),
-        },
-        {
-          href: "/pos",
-          title: "POS / Caisse",
-          description: "Caisse rapide, ventes, tickets et paiements en boutique.",
-          icon: CreditCard,
-          show: canUsePos && moduleEnabled("pos"),
-        },
-        {
-          href: "/produits",
-          title: "Produits",
-          description: "Catalogue produits, prix, stocks et codes-barres.",
-          icon: Boxes,
-          show: moduleEnabled("produits"),
-        },
-      ],
-    },
-    {
-      key: "livraison",
-      title: "Livraison",
-      cards: [
-        {
-          href: "/client/livraison",
-          title: "Livraison client",
-          description: "Demander une livraison, suivre une commande et calculer les frais.",
-          icon: Package,
-          show: moduleEnabled("livraison"),
-        },
-        {
-          href: "/livreur",
-          title: "Espace livreur",
-          description: "Tableau de bord des livreurs, missions, revenus et statut.",
-          icon: Truck,
-          show: moduleEnabled("livraison"),
-        },
-        {
-          href: "/livreur/inscription",
-          title: "Inscription livreur",
-          description: "Devenir livreur, coursier ou taxi partenaire MaliLink.",
-          icon: Bike,
-          show: moduleEnabled("livraison"),
-        },
-      ],
-    },
-    {
-      key: "restaurant",
-      title: "Restaurant",
-      cards: [
-        {
-          href: "/restaurant",
-          title: "Restaurant",
-          description: "Menus, commandes, tables et livraison de repas.",
-          icon: Utensils,
-          show: moduleEnabled("restaurant"),
-        },
-      ],
-    },
-    {
-      key: "immobilier",
-      title: "Hôtel / Immobilier",
-      cards: [
-        {
-          href: "/immobilier",
-          title: "Immobilier / Hôtel",
-          description: "Biens, locations, ventes, réservations et gestion hôtelière.",
-          icon: Building2,
-          show: moduleEnabled("immobilier") || moduleEnabled("hotel"),
-        },
-      ],
-    },
-    {
-      key: "automobile",
-      title: "Automobile",
-      cards: [
-        {
-          href: "/automobile",
-          title: "Automobile",
-          description: "Véhicules, ventes, locations et gestion de garage.",
-          icon: Car,
-          show: moduleEnabled("automobile"),
-        },
-      ],
-    },
-    {
-      key: "laboratoire",
-      title: "Laboratoire",
-      cards: [
-        {
-          href: "/laboratoire",
-          title: "Laboratoire",
-          description: "Analyses, rendez-vous, patients et résultats en ligne.",
-          icon: FlaskConical,
-          show: moduleEnabled("laboratoire"),
-        },
-      ],
-    },
-    {
-      key: "gestion",
-      title: "Comptabilité / Gestion",
-      cards: [
-        {
-          href: "/wallet",
-          title: "MaliLink Wallet",
-          description: "Solde, transferts internes, reçus et historique.",
-          icon: CreditCard,
-          show: moduleEnabled("wallet"),
-        },
-        {
-          href: "/finance",
-          title: "Finance",
-          description: "Revenus, dépenses, bénéfices, trésorerie et budgets.",
-          icon: BarChart3,
-          show: canViewAccounting && moduleEnabled("comptabilite"),
-        },
-        {
-          href: "/badges",
-          title: "Badges",
-          description: "Générer, imprimer et vérifier les badges QR.",
-          icon: ShieldCheck,
-          show: isAdminLike && moduleEnabled("badges"),
-        },
-        {
-          href: "/comptabilite",
-          title: "Comptabilité",
-          description: "Factures, dépenses, trésorerie et paie.",
-          icon: Calculator,
-          show: canViewAccounting && moduleEnabled("comptabilite"),
-        },
-        {
-          href: "/rapports",
-          title: "Rapports",
-          description: "Rapports d'activité, ventes et performances.",
-          icon: BarChart3,
-          show: canViewDirectionModules && moduleEnabled("rapports"),
-        },
-      ],
-    },
-    {
-      key: "ia",
-      title: "Assistant IA",
-      cards: [
-        {
-          href: "/assistant",
-          title: "Assistant IA",
-          description: "Assistant intelligent pour vos ventes, stocks et décisions.",
-          icon: Bot,
-          show: moduleEnabled("ia"),
-        },
-      ],
-    },
-  ];
+        <DashboardStatsGrid stats={coreStats} />
 
-  const businessTypePriorities: Array<{ match: string[]; order: string[] }> = [
-    { match: ["ecole", "education", "universite", "institut", "formation"], order: ["education", "ia", "gestion"] },
-    { match: ["restaurant", "restauration", "cafe", "maquis"], order: ["restaurant", "commerce", "livraison"] },
-    { match: ["laboratoire", "labo", "sante", "clinique", "pharmacie"], order: ["laboratoire", "ia", "gestion"] },
-    { match: ["automobile", "auto", "garage", "vehicule", "voiture"], order: ["automobile", "commerce", "gestion"] },
-    { match: ["immobilier", "hotel", "residence", "agence immobiliere"], order: ["immobilier", "commerce", "gestion"] },
-    { match: ["logistique", "transport", "livraison", "coursier"], order: ["livraison", "commerce", "gestion"] },
-    { match: ["b2b", "grossiste", "fournisseur", "distribution"], order: ["commerce", "gestion", "livraison"] },
-    { match: ["commerce", "boutique", "magasin", "vente", "shop"], order: ["commerce", "livraison", "gestion"] },
-    { match: ["service"], order: ["ia", "commerce", "gestion"] },
-  ];
+        {businessStatCards.length > 0 && (
+          <section>
+            <div className="flex items-center gap-3">
+              <span className="h-6 w-1.5 rounded-full bg-[#d4a23c]" aria-hidden="true" />
+              <h2 className="text-xl font-black text-[#0f1b3d]">Indicateurs de votre activité</h2>
+            </div>
+            <div className="mt-4">
+              <DashboardStatsGrid stats={businessStatCards} />
+            </div>
+          </section>
+        )}
 
-  const matchedPriority = businessTypeNormalized
-    ? businessTypePriorities.find(({ match }) => match.some((keyword) => businessTypeNormalized.includes(keyword)))
-    : undefined;
-  const priorityOrder = matchedPriority?.order || [];
-  const orderedCategoryKeys = [
-    ...priorityOrder,
-    ...moduleCategories.map((category) => category.key).filter((key) => !priorityOrder.includes(key)),
-  ];
-  const orderedCategories = orderedCategoryKeys
-    .map((key) => moduleCategories.find((category) => category.key === key))
-    .filter((category): category is (typeof moduleCategories)[number] => Boolean(category))
-    .map((category) => ({ ...category, cards: category.cards.filter((card) => card.show) }))
-    .filter((category) => category.cards.length > 0);
+        {orderedSections.length > 0 && (
+          <section>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-xl font-black text-[#0f1b3d]">Modules MaliLink</h2>
+              {identity.businessType && (
+                <span className="rounded-full bg-[#0f1b3d] px-4 py-1 text-sm font-bold text-white">
+                  {identity.businessType}
+                </span>
+              )}
+            </div>
+            {orderedSections.map((group, index) => (
+              <DashboardModuleSection
+                key={group.key}
+                group={group}
+                highlighted={index === 0 && businessMatched}
+              />
+            ))}
+          </section>
+        )}
 
+        {hasLogisticsData && (
+          <>
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <ChartCard title="Vue générale du système">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={overviewData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#0f1b3d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              <ChartCard title="Répartition des alertes">
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie data={alertData} dataKey="value" nameKey="name" outerRadius={80} label>
+                      {alertData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={["#d4a23c", "#c0392b", "#0f1b3d"][index % 3]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+              <ChartCard title="Quantités des derniers mouvements">
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={movementData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="quantité" stroke="#d4a23c" strokeWidth={3} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartCard>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                <h2 className="mb-4 text-lg font-black text-[#0f1b3d]">Derniers mouvements</h2>
+                {derniersMouvements.length === 0 ? (
+                  <p className="text-gray-500">Aucun mouvement récent.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {derniersMouvements.map((mouvement: any) => (
+                      <div key={mouvement.id} className="border-b pb-2">
+                        <p className="font-bold text-[#0f1b3d]">
+                          {mouvement.type} - {mouvement.product_name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Quantité : {mouvement.quantity} | Statut : {mouvement.status}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {activitesRecentes.length > 0 && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <h2 className="mb-4 text-lg font-black text-[#0f1b3d]">Activités récentes</h2>
+            <div className="space-y-3">
+              {activitesRecentes.map((activity: any) => (
+                <div key={activity.id} className="border-b pb-2">
+                  <p className="font-bold text-[#0f1b3d]">{activity.action}</p>
+                  <p className="text-sm text-gray-500">
+                    {activity.user_name} | {activity.module}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <AIChatWidget
+          space="business_dashboard"
+          suggestions={[
+            "Résume mes ventes aujourd’hui",
+            "Quelles commandes sont en attente ?",
+            "Aide-moi à suivre mes livraisons",
+            "Explique-moi comment utiliser MaliLink",
+          ]}
+        />
+        <div className="fixed bottom-24 right-6 z-50">
+          <WhatsAppSupportButton className="shadow-2xl" label="Support" />
+        </div>
+      </MaliLinkDashboardLayout>
+    );
+  }
+
+  // ==================== TRIANGLE / HAFIYA : dashboard historique ====================
   return (
     <div className="min-h-screen flex bg-gray-100">
-      {appProduct === "malilink" ? (
-        <MaliLinkSidebar
-          companyName={displayCompanyName}
-          logoUrl={displayLogoUrl || undefined}
-          moduleEnabled={moduleEnabled}
-          isSuperAdmin={isSuperAdmin}
-          isAdminLike={isAdminLike}
-          canManageWarehouse={canManageWarehouse}
-          canViewDirectionModules={canViewDirectionModules}
-          canViewAccounting={canViewAccounting}
-          canUsePos={canUsePos}
-          isReadOnlyRole={isReadOnlyRole}
-          onLogout={handleLogout}
-        />
-      ) : (
       <aside className="w-64 bg-black text-white p-6 overflow-y-auto">
         <div className="mb-10 flex items-center gap-3">
           {displayLogoUrl ? (
@@ -536,386 +486,342 @@ export default function DashboardPage() {
           </div>
         </div>
 
-       <ul className="space-y-3">
+        <ul className="space-y-3">
+          <Link href="/dashboard">
+            <li className="bg-yellow-500 text-black p-3 rounded-lg font-semibold cursor-pointer flex items-center gap-3">
+              <LayoutDashboard size={20} />
+              Tableau de bord
+            </li>
+          </Link>
 
-  <Link href="/dashboard">
-    <li className="bg-yellow-500 text-black p-3 rounded-lg font-semibold cursor-pointer flex items-center gap-3">
-      <LayoutDashboard size={20} />
-      Tableau de bord
-    </li>
-  </Link>
+          <Link href="/recherche">
+            <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+              <Search size={20} />
+              Recherche
+            </li>
+          </Link>
 
-  <Link href="/recherche">
-    <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-      <Search size={20} />
-      Recherche
-    </li>
-  </Link>
+          {moduleEnabled("ia") && (
+            <Link href="/assistant">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Bot size={20} />
+                Assistant IA
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("ia") && (
-    <Link href="/assistant">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Bot size={20} />
-        Assistant IA
-      </li>
-    </Link>
-  )}
+          {isSuperAdmin && (
+            <Link href="/super-admin">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <ShieldCheck size={20} />
+                Super Admin
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("education") && (
-    <Link href="/education">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <GraduationCap size={20} />
-        Éducation
-      </li>
-    </Link>
-  )}
+          {moduleEnabled("chat") && (
+            <Link href="/chat">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <MessageCircle size={20} />
+                Chat interne
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("livraison") && (
-    <>
-      <Link href="/client/livraison">
-        <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-          <Package size={20} />
-          Livraison client
-        </li>
-      </Link>
+          {moduleEnabled("notifications") && (
+            <Link href="/notifications">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Bell size={20} />
+                Notifications
+              </li>
+            </Link>
+          )}
 
-      <Link href="/livreur">
-        <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-          <Truck size={20} />
-          Espace livreur
-        </li>
-      </Link>
-    </>
-  )}
+          {moduleEnabled("produits") && (
+            <Link href="/produits">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Package size={20} />
+                Produits
+              </li>
+            </Link>
+          )}
 
-  {isSuperAdmin && (
-    <Link href="/super-admin">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <ShieldCheck size={20} />
-        Super Admin
-      </li>
-    </Link>
-  )}
+          {canManageWarehouse && (moduleEnabled("crm") || moduleEnabled("partenaires")) && (
+            <Link href="/partenaires">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Handshake size={20} />
+                Partenaires
+              </li>
+            </Link>
+          )}
 
+          {moduleEnabled("stock") && (
+            <Link href="/stocks">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Boxes size={20} />
+                Stockages
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("chat") && (
-    <Link href="/chat">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <MessageCircle size={20} />
-        Chat interne
-      </li>
-    </Link>
-  )}
+          {moduleEnabled("inventaire") && (
+            <Link href="/inventaires">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <ClipboardList size={20} />
+                Inventaires
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("notifications") && (
-    <Link href="/notifications">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Bell size={20} />
-        Notifications
-      </li>
-    </Link>
-  )}
+          {isAdminLike && (
+            <>
+              {moduleEnabled("entrepots") && (
+                <Link href="/entrepots">
+                  <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                    <Warehouse size={20} />
+                    Entrepôts
+                  </li>
+                </Link>
+              )}
 
-  {moduleEnabled("produits") && (
-    <Link href="/produits">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Package size={20} />
-        Produits
-      </li>
-    </Link>
-  )}
+              {moduleEnabled("emplacements") && (
+                <Link href="/emplacements">
+                  <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                    <MapPin size={20} />
+                    Emplacements
+                  </li>
+                </Link>
+              )}
+            </>
+          )}
 
-  {canManageWarehouse && (moduleEnabled("crm") || moduleEnabled("partenaires")) && (
-    <Link href="/partenaires">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Handshake size={20} />
-        Partenaires
-      </li>
-    </Link>
-  )}
+          {moduleEnabled("stock") && (
+            <Link href="/scanner">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <ScanLine size={20} />
+                Scanner QR
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("stock") && (
-    <Link href="/stocks">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Boxes size={20} />
-        Stockages
-      </li>
-    </Link>
-  )}
+          {canUsePos && moduleEnabled("pos") && (
+            <Link href="/pos">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <ShoppingCart size={20} />
+                POS / Caisse
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("inventaire") && (
-    <Link href="/inventaires">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <ClipboardList size={20} />
-        Inventaires
-      </li>
-    </Link>
-  )}
+          {moduleEnabled("marketplace") && (
+            <Link href="/marketplace">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <ShoppingCart size={20} />
+                Marketplace
+              </li>
+            </Link>
+          )}
 
-  {isAdminLike && (
-    <>
-      {moduleEnabled("entrepots") && (
-        <Link href="/entrepots">
-          <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-            <Warehouse size={20} />
-            Entrepôts
-          </li>
-        </Link>
-      )}
+          {moduleEnabled("automobile") && (
+            <Link href="/automobile">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Car size={20} />
+                Automobile
+              </li>
+            </Link>
+          )}
 
-      {moduleEnabled("emplacements") && (
-        <Link href="/emplacements">
-          <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-            <MapPin size={20} />
-            Emplacements
-          </li>
-        </Link>
-      )}
-    </>
-  )}
+          {(moduleEnabled("immobilier") || moduleEnabled("hotel")) && (
+            <Link href="/immobilier">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Building2 size={20} />
+                Immobilier / Hôtel
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("stock") && (
-    <Link href="/scanner">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <ScanLine size={20} />
-        Scanner QR
-      </li>
-    </Link>
-  )}
+          {moduleEnabled("restaurant") && (
+            <Link href="/restaurant">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Utensils size={20} />
+                Restaurant
+              </li>
+            </Link>
+          )}
 
-  {canUsePos && moduleEnabled("pos") && (
-    <Link href="/pos">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <ShoppingCart size={20} />
-        POS / Caisse
-      </li>
-    </Link>
-  )}
+          {moduleEnabled("laboratoire") && (
+            <Link href="/laboratoire">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <FlaskConical size={20} />
+                Laboratoire
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("marketplace") && (
-    <Link href="/marketplace">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <ShoppingCart size={20} />
-        Marketplace
-      </li>
-    </Link>
-  )}
+          {canViewAccounting && moduleEnabled("comptabilite") && (
+            <Link href="/comptabilite">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <Calculator size={20} />
+                Comptabilité
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("automobile") && (
-    <Link href="/automobile">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Car size={20} />
-        Automobile
-      </li>
-    </Link>
-  )}
+          {canViewDirectionModules && (moduleEnabled("documents") || moduleEnabled("rapports")) && (
+            <>
+              {moduleEnabled("documents") && (
+                <Link href="/documents">
+                  <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                    <FileText size={20} />
+                    Documents
+                  </li>
+                </Link>
+              )}
 
-  {(moduleEnabled("immobilier") || moduleEnabled("hotel")) && (
-    <Link href="/immobilier">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Building2 size={20} />
-        Immobilier / Hôtel
-      </li>
-    </Link>
-  )}
+              {moduleEnabled("rapports") && (
+                <Link href="/rapports">
+                  <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                    <BarChart3 size={20} />
+                    Rapports
+                  </li>
+                </Link>
+              )}
+            </>
+          )}
 
-  {moduleEnabled("restaurant") && (
-    <Link href="/restaurant">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Utensils size={20} />
-        Restaurant
-      </li>
-    </Link>
-  )}
+          {(canManageWarehouse || isReadOnlyRole) && moduleEnabled("alertes") && (
+            <Link href="/alertes">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <TriangleAlert size={20} />
+                Alertes
+              </li>
+            </Link>
+          )}
 
-  {moduleEnabled("laboratoire") && (
-    <Link href="/laboratoire">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <FlaskConical size={20} />
-        Laboratoire
-      </li>
-    </Link>
-  )}
+          {isAdminLike && (
+            <>
+              {moduleEnabled("activites") && (
+                <Link href="/activites">
+                  <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                    <Activity size={20} />
+                    Activités
+                  </li>
+                </Link>
+              )}
 
-  {canViewAccounting && moduleEnabled("comptabilite") && (
-    <Link href="/comptabilite">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <Calculator size={20} />
-        Comptabilité
-      </li>
-    </Link>
-  )}
+              {moduleEnabled("utilisateurs") && (
+                <Link href="/utilisateurs">
+                  <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                    <Users size={20} />
+                    Utilisateurs
+                  </li>
+                </Link>
+              )}
 
-  {canViewDirectionModules && (moduleEnabled("documents") || moduleEnabled("rapports")) && (
-    <>
-      {moduleEnabled("documents") && (
-        <Link href="/documents">
-          <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-            <FileText size={20} />
-            Documents
-          </li>
-        </Link>
-      )}
+              {moduleEnabled("badges") && (
+                <Link href="/badges">
+                  <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                    <ShieldCheck size={20} />
+                    Badges
+                  </li>
+                </Link>
+              )}
+            </>
+          )}
 
-      {moduleEnabled("rapports") && (
-        <Link href="/rapports">
-          <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-            <BarChart3 size={20} />
-            Rapports
-          </li>
-        </Link>
-      )}
+          {moduleEnabled("pointage") && (
+            <Link href="/attendance-scan">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <QrCode size={20} />
+                Pointage QR
+              </li>
+            </Link>
+          )}
 
-    </>
-  )}
+          {moduleEnabled("pointage") && (
+            <Link href="/pointage">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <ClipboardCheck size={20} />
+                Pointage
+              </li>
+            </Link>
+          )}
 
-  {(canManageWarehouse || isReadOnlyRole) && moduleEnabled("alertes") && (
-    <Link href="/alertes">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <TriangleAlert size={20} />
-        Alertes
-      </li>
-    </Link>
-  )}
+          {isAdminLike && moduleEnabled("pointage") && (
+            <>
+              <Link href="/parametres-pointage">
+                <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                  <Settings size={20} />
+                  Paramètres pointage
+                </li>
+              </Link>
 
-  {isAdminLike && (
-    <>
-      {moduleEnabled("activites") && (
-        <Link href="/activites">
-          <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-            <Activity size={20} />
-            Activités
-          </li>
-        </Link>
-      )}
+              <Link href="/parametres">
+                <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                  <Settings size={20} />
+                  Paramètres
+                </li>
+              </Link>
+            </>
+          )}
 
-      {moduleEnabled("utilisateurs") && (
-        <Link href="/utilisateurs">
-          <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-            <Users size={20} />
-            Utilisateurs
-          </li>
-        </Link>
-      )}
-
-      {moduleEnabled("badges") && (
-        <Link href="/badges">
-          <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-            Badges
-          </li>
-        </Link>
-      )}
-    </>
-  )}
-
-
-  {moduleEnabled("pointage") && (
-    <Link href="/attendance-scan">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <QrCode size={20} />
-        Pointage QR
-      </li>
-    </Link>
-  )}
-
-  {moduleEnabled("pointage") && (
-    <Link href="/pointage">
-      <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-        <ClipboardCheck size={20} />
-        Pointage
-      </li>
-    </Link>
-  )}
-
-  {isAdminLike && moduleEnabled("pointage") && (
-    <>
-      <Link href="/parametres-pointage">
-        <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-          <Settings size={20} />
-          Paramètres pointage
-        </li>
-      </Link>
-
-      <Link href="/parametres">
-        <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
-          <Settings size={20} />
-          Paramètres
-        </li>
-      </Link>
-    </>
-  )}
-
-  <button
-    onClick={handleLogout}
-    className="w-full text-left p-3 bg-red-600 hover:bg-red-700 rounded-lg cursor-pointer font-bold text-white mt-8 flex items-center gap-3"
-  >
-    <LogOut size={20} />
-    Déconnexion
-  </button>
-
-</ul>
-      </aside>
-      )}
-
-    <main className={appProduct === "malilink" ? "flex-1 p-4 pt-20 md:p-8 lg:pt-8" : "flex-1 p-4 md:p-8"}>
-  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-    <h1 className="text-4xl font-bold text-black">
-      Tableau de bord
-    </h1>
-    <InstallPWAButton />
-  </div>
-
-  <TrialBanner user={userData} />
-
-  {accessMessage && (
-    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 font-semibold text-red-700">
-      {accessMessage}
-    </div>
-  )}
-
-  {userData && (
-    <div className="bg-white rounded-2xl shadow p-4 mt-4 mb-6">
-      <div className="flex flex-wrap gap-6 text-sm text-black">
-
-        <p>
-          <span className="font-bold">Entreprise :</span>{" "}
-          {displayCompanyName}
-        </p>
-
-        <p>
-          <span className="font-bold">Plan :</span>{" "}
-          {displayPlanName || "Non défini"}
-        </p>
-
-        <p>
-          <span className="font-bold">Abonnement :</span>{" "}
-          <span
-            className={
-              userData.subscription_status === "active"
-                ? "text-green-600 font-bold"
-                : displaySubscriptionStatus === "Illimité"
-                  ? "text-green-600 font-bold"
-                  : "text-red-600 font-bold"
-            }
+          <button
+            onClick={handleLogout}
+            className="w-full text-left p-3 bg-red-600 hover:bg-red-700 rounded-lg cursor-pointer font-bold text-white mt-8 flex items-center gap-3"
           >
-            {displaySubscriptionStatus || "Non défini"}
-          </span>
+            <LogOut size={20} />
+            Déconnexion
+          </button>
+        </ul>
+      </aside>
+
+      <main className="flex-1 p-4 md:p-8">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-4xl font-bold text-black">Tableau de bord</h1>
+          <InstallPWAButton />
+        </div>
+
+        <TrialBanner user={userData} />
+
+        {accessMessage && (
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 font-semibold text-red-700">
+            {accessMessage}
+          </div>
+        )}
+
+        {userData && (
+          <div className="bg-white rounded-2xl shadow p-4 mt-4 mb-6">
+            <div className="flex flex-wrap gap-6 text-sm text-black">
+              <p>
+                <span className="font-bold">Entreprise :</span> {displayCompanyName}
+              </p>
+              <p>
+                <span className="font-bold">Plan :</span> {displayPlanName || "Non défini"}
+              </p>
+              <p>
+                <span className="font-bold">Abonnement :</span>{" "}
+                <span
+                  className={
+                    userData.subscription_status === "active"
+                      ? "text-green-600 font-bold"
+                      : displaySubscriptionStatus === "Illimité"
+                        ? "text-green-600 font-bold"
+                        : "text-red-600 font-bold"
+                  }
+                >
+                  {displaySubscriptionStatus || "Non défini"}
+                </span>
+              </p>
+              <p>
+                <span className="font-bold">Super Admin :</span> {isSuperAdmin ? "Oui" : "Non"}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <p className="text-gray-500 mt-2 mb-8">
+          Vue globale graphique des opérations logistiques en temps réel.
         </p>
-
-        <p>
-          <span className="font-bold">Super Admin :</span>{" "}
-          {isSuperAdmin ? "Oui" : "Non"}
-        </p>
-
-      </div>
-    </div>
-  )}
-
-  <p className="text-gray-500 mt-2 mb-8">
-    {appProduct === "malilink"
-      ? "Vue globale de votre activité MaliLink en temps réel."
-      : "Vue globale graphique des opérations logistiques en temps réel."}
-  </p>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 xl:grid-cols-5 mb-8">
           <StatCard title="Produits" value={stats.total_produits} color="text-blue-500" />
@@ -933,90 +839,6 @@ export default function DashboardPage() {
           <StatCard title="Rupture stock" value={stats.rupture_stock} color="text-red-600" />
         </div>
 
-        {appProduct === "malilink" && businessStats && (
-          <div className="mb-8">
-            <div className="flex items-center gap-3">
-              <span className="h-6 w-1.5 rounded-full bg-yellow-500" aria-hidden="true" />
-              <h2 className="text-2xl font-bold text-black">Indicateurs de votre activité</h2>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-              {businessStats.kind === "education" && (
-                <>
-                  <StatCard title="Élèves actifs" value={businessStats.data.total_students} color="text-blue-600" />
-                  <StatCard title="Présents aujourd'hui" value={businessStats.data.today?.presents} color="text-green-600" />
-                  <StatCard title="Retards" value={businessStats.data.today?.retards} color="text-orange-500" />
-                  <StatCard title="Absents" value={businessStats.data.today?.absents} color="text-red-600" />
-                </>
-              )}
-              {businessStats.kind === "restaurant" && (
-                <>
-                  <StatCard title="Plats au menu" value={businessStats.data.menu?.total} color="text-blue-600" />
-                  <StatCard title="Commandes" value={businessStats.data.orders?.total} color="text-green-600" />
-                  <StatCard title="En préparation" value={businessStats.data.orders?.preparation} color="text-orange-500" />
-                  <StatCard title="Tables occupées" value={businessStats.data.tables?.occupees} color="text-purple-600" />
-                </>
-              )}
-              {businessStats.kind === "automobile" && (
-                <>
-                  <StatCard title="Véhicules" value={businessStats.data.vehicles?.total} color="text-blue-600" />
-                  <StatCard title="Disponibles" value={businessStats.data.vehicles?.disponibles} color="text-green-600" />
-                  <StatCard title="Loués" value={businessStats.data.vehicles?.loues} color="text-orange-500" />
-                  <StatCard title="Vendus" value={businessStats.data.vehicles?.vendus} color="text-purple-600" />
-                </>
-              )}
-              {businessStats.kind === "immobilier" && (
-                <>
-                  <StatCard title="Biens" value={businessStats.data.properties?.total} color="text-blue-600" />
-                  <StatCard title="Disponibles" value={businessStats.data.properties?.disponibles} color="text-green-600" />
-                  <StatCard title="Loués" value={businessStats.data.properties?.loues} color="text-orange-500" />
-                  <StatCard title="Réservations" value={businessStats.data.reservations?.total} color="text-purple-600" />
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {appProduct === "malilink" && orderedCategories.length > 0 && (
-          <div className="mb-8">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-2xl font-bold text-black">Modules MaliLink</h2>
-              {businessTypeLabel && (
-                <span className="rounded-full bg-yellow-500 px-4 py-1 text-sm font-bold text-black">
-                  {businessTypeLabel}
-                </span>
-              )}
-            </div>
-            {orderedCategories.map((category, categoryIndex) => (
-              <div key={category.key} className="mt-6">
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="h-6 w-1.5 rounded-full bg-yellow-500" aria-hidden="true" />
-                  <h3 className="text-lg font-bold text-black">{category.title}</h3>
-                  {categoryIndex === 0 && matchedPriority && (
-                    <span className="rounded-full border border-yellow-500 bg-yellow-50 px-3 py-0.5 text-xs font-semibold text-yellow-700">
-                      Prioritaire pour votre activité
-                    </span>
-                  )}
-                </div>
-                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {category.cards.map((card) => (
-                    <Link
-                      key={card.href}
-                      href={card.href}
-                      className="group rounded-2xl bg-white p-5 shadow transition hover:shadow-lg"
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yellow-500 text-black">
-                        <card.icon size={26} />
-                      </div>
-                      <p className="mt-3 text-lg font-black text-black group-hover:text-yellow-600">{card.title}</p>
-                      <p className="text-sm text-gray-500">{card.description}</p>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
           <ChartCard title="Vue générale du système">
             <ResponsiveContainer width="100%" height={220}>
@@ -1032,13 +854,7 @@ export default function DashboardPage() {
           <ChartCard title="Répartition des alertes">
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
-                <Pie
-                  data={alertData}
-                  dataKey="value"
-                  nameKey="name"
-                  outerRadius={80}
-                  label
-                >
+                <Pie data={alertData} dataKey="value" nameKey="name" outerRadius={80} label>
                   {alertData.map((entry, index) => (
                     <Cell key={`cell-${index}`} />
                   ))}
@@ -1062,20 +878,16 @@ export default function DashboardPage() {
           </ChartCard>
 
           <div className="bg-white p-4 rounded-2xl shadow">
-            <h2 className="text-xl font-bold text-black mb-4">
-              Derniers mouvements
-            </h2>
-
-            {stats.derniers_mouvements.length === 0 ? (
+            <h2 className="text-xl font-bold text-black mb-4">Derniers mouvements</h2>
+            {derniersMouvements.length === 0 ? (
               <p className="text-gray-500">Aucun mouvement récent.</p>
             ) : (
               <div className="space-y-3">
-                {stats.derniers_mouvements.map((mouvement: any) => (
+                {derniersMouvements.map((mouvement: any) => (
                   <div key={mouvement.id} className="border-b pb-2">
                     <p className="font-bold text-black">
                       {mouvement.type} - {mouvement.product_name}
                     </p>
-
                     <p className="text-sm text-gray-500">
                       Quantité : {mouvement.quantity} | Statut : {mouvement.status}
                     </p>
@@ -1087,18 +899,14 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-white p-4 rounded-2xl shadow">
-          <h2 className="text-xl font-bold text-black mb-4">
-            Activités récentes
-          </h2>
-
-          {stats.activites_recentes.length === 0 ? (
+          <h2 className="text-xl font-bold text-black mb-4">Activités récentes</h2>
+          {activitesRecentes.length === 0 ? (
             <p className="text-gray-500">Aucune activité récente.</p>
           ) : (
             <div className="space-y-3">
-              {stats.activites_recentes.map((activity: any) => (
+              {activitesRecentes.map((activity: any) => (
                 <div key={activity.id} className="border-b pb-2">
                   <p className="font-bold text-black">{activity.action}</p>
-
                   <p className="text-sm text-gray-500">
                     {activity.user_name} | {activity.module}
                   </p>
@@ -1108,24 +916,12 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {appProduct === "malilink" ? (
-          <AIChatWidget
-            space="business_dashboard"
-            suggestions={[
-              "Résume mes ventes aujourd’hui",
-              "Quelles commandes sont en attente ?",
-              "Aide-moi à suivre mes livraisons",
-              "Explique-moi comment utiliser MaliLink",
-            ]}
-          />
-        ) : (
-          <a
-            href="/assistant"
-            className="fixed bottom-6 right-6 bg-black text-white px-5 py-4 rounded-full shadow-2xl font-bold hover:scale-105 transition z-50"
-          >
-            🤖 Triangle IA
-          </a>
-        )}
+        <a
+          href="/assistant"
+          className="fixed bottom-6 right-6 bg-black text-white px-5 py-4 rounded-full shadow-2xl font-bold hover:scale-105 transition z-50"
+        >
+          🤖 Triangle IA
+        </a>
         <div className="fixed bottom-24 right-6 z-50">
           <WhatsAppSupportButton className="shadow-2xl" label="Support" />
         </div>
@@ -1147,7 +943,6 @@ function ChartCard({ title, children }: any) {
   return (
     <div className="bg-white p-4 rounded-2xl shadow">
       <h2 className="text-xl font-bold text-black mb-4">{title}</h2>
-
       <div className="h-[220px]">{children}</div>
     </div>
   );
