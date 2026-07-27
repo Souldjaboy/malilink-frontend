@@ -9,6 +9,11 @@ type Subject = { id: number; name: string };
 type Term = { id: number; label: string };
 type Exam = { id: number; title: string; exam_type: string; class_name: string; subject_name: string; max_score: string; exam_date: string | null };
 type Student = { id: number; first_name: string; last_name: string };
+type ReportCard = {
+  id: number; first_name: string; last_name: string; student_matricule: string;
+  general_average: string | null; rank_in_class: number | null; class_size: number | null;
+  mention: string; appreciation: string | null; conduct: string | null; council_decision: string | null;
+};
 
 export default function EducationNotesPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
@@ -21,6 +26,9 @@ export default function EducationNotesPage() {
   const [scores, setScores] = useState<Record<number, string>>({});
   const [message, setMessage] = useState("");
   const [genForm, setGenForm] = useState({ class_id: "", term_id: "" });
+  const [rcFilter, setRcFilter] = useState({ class_id: "", term_id: "" });
+  const [reportCards, setReportCards] = useState<ReportCard[]>([]);
+  const [editRc, setEditRc] = useState<ReportCard | null>(null);
 
   const load = useCallback(async () => {
     const [cRes, sRes, tRes, eRes] = await Promise.all([
@@ -97,6 +105,37 @@ export default function EducationNotesPage() {
     });
     const data = await res.json();
     setMessage(res.ok ? `✅ ${data.generated} bulletin(s) généré(s) avec moyennes et rangs` : `❌ ${data?.error || "Erreur"}`);
+    if (res.ok) {
+      setRcFilter({ class_id: genForm.class_id, term_id: genForm.term_id });
+      loadReportCards(genForm.class_id, genForm.term_id);
+    }
+  };
+
+  const loadReportCards = async (classId: string, termId: string) => {
+    if (!classId) return setReportCards([]);
+    const q = termId ? `?term_id=${termId}` : "";
+    const res = await authFetch(`/education/classes/${classId}/report-cards${q}`);
+    setReportCards(res.ok ? await res.json() : []);
+  };
+
+  const downloadPdf = async (rc: ReportCard) => {
+    const res = await authFetch(`/education/report-cards/${rc.id}/pdf`);
+    if (!res.ok) return setMessage("❌ Erreur téléchargement du bulletin.");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `bulletin-${rc.student_matricule || rc.id}.pdf`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const saveAppreciation = async () => {
+    if (!editRc) return;
+    const res = await authFetch(`/education/report-cards/${editRc.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ appreciation: editRc.appreciation, conduct: editRc.conduct, council_decision: editRc.council_decision }),
+    });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); return setMessage(`❌ ${d?.error || "Erreur"}`); }
+    setEditRc(null);
+    await loadReportCards(rcFilter.class_id, rcFilter.term_id);
   };
 
   return (
@@ -184,6 +223,60 @@ export default function EducationNotesPage() {
             </button>
           </form>
         </section>
+
+        <section className="rounded-2xl bg-white p-6 shadow">
+          <h2 className="text-xl font-black text-gray-900">Bulletins générés</h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <select value={rcFilter.class_id} onChange={(e) => { const v = e.target.value; setRcFilter({ ...rcFilter, class_id: v }); loadReportCards(v, rcFilter.term_id); }} className="rounded-xl border border-gray-300 p-3 text-gray-900">
+              <option value="">Classe</option>
+              {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select value={rcFilter.term_id} onChange={(e) => { const v = e.target.value; setRcFilter({ ...rcFilter, term_id: v }); loadReportCards(rcFilter.class_id, v); }} className="rounded-xl border border-gray-300 p-3 text-gray-900">
+              <option value="">Toutes périodes</option>
+              {terms.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+          </div>
+          {reportCards.length === 0 ? (
+            <p className="mt-3 text-gray-500">Sélectionnez une classe pour afficher les bulletins.</p>
+          ) : (
+            <div className="mt-3 overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead><tr className="text-left text-gray-500"><th className="p-2">Rang</th><th className="p-2">Élève</th><th className="p-2">Moyenne</th><th className="p-2">Mention</th><th className="p-2">Actions</th></tr></thead>
+                <tbody>
+                  {reportCards.map((rc) => (
+                    <tr key={rc.id} className="border-t border-gray-100">
+                      <td className="p-2 font-black text-gray-900">{rc.rank_in_class ? `${rc.rank_in_class}ᵉ` : "—"}</td>
+                      <td className="p-2 font-semibold text-gray-900">{rc.first_name} {rc.last_name}</td>
+                      <td className="p-2 text-gray-700">{rc.general_average == null ? "—" : `${Number(rc.general_average).toFixed(2)}/20`}</td>
+                      <td className="p-2 text-gray-700">{rc.mention}</td>
+                      <td className="p-2">
+                        <div className="flex gap-1">
+                          <button onClick={() => setEditRc(rc)} className="rounded-lg bg-gray-200 px-3 py-1 text-xs font-bold text-gray-800 hover:bg-gray-300">Appréciation</button>
+                          <button onClick={() => downloadPdf(rc)} className="rounded-lg bg-blue-700 px-3 py-1 text-xs font-bold text-white hover:bg-blue-800">Bulletin PDF</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {editRc && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEditRc(null)}>
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-black text-gray-900">{editRc.first_name} {editRc.last_name}</h3>
+              <label className="mt-3 block text-sm font-semibold text-gray-700">Conduite</label>
+              <input value={editRc.conduct || ""} onChange={(e) => setEditRc({ ...editRc, conduct: e.target.value })} className="w-full rounded-xl border border-gray-300 p-2 text-gray-900" placeholder="Ex. Très bonne" />
+              <label className="mt-3 block text-sm font-semibold text-gray-700">Appréciation</label>
+              <textarea value={editRc.appreciation || ""} onChange={(e) => setEditRc({ ...editRc, appreciation: e.target.value })} rows={3} className="w-full rounded-xl border border-gray-300 p-2 text-gray-900" placeholder="Appréciation générale" />
+              <label className="mt-3 block text-sm font-semibold text-gray-700">Décision du conseil</label>
+              <input value={editRc.council_decision || ""} onChange={(e) => setEditRc({ ...editRc, council_decision: e.target.value })} className="w-full rounded-xl border border-gray-300 p-2 text-gray-900" placeholder="Ex. Admis(e) en classe supérieure" />
+              <button onClick={saveAppreciation} className="mt-4 w-full rounded-xl bg-yellow-500 p-3 font-black text-black">Enregistrer</button>
+            </div>
+          </div>
+        )}
 
         {gradeExam && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setGradeExam(null)}>
