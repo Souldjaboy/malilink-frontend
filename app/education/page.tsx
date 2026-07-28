@@ -22,6 +22,7 @@ const NAV = [
   { href: "/education/inscriptions", label: "Inscriptions", desc: "Fiches PDF, frais, QR de vérification", icon: "📄" },
   { href: "/education/mensualites", label: "Mensualités", desc: "Échéanciers de scolarité, reçus PDF", icon: "🗓️" },
   { href: "/education/cours", label: "Cours en ligne", desc: "Supports, leçons, liens vidéo/visio", icon: "📚" },
+  { href: "/education/devoirs", label: "Devoirs & corrections", desc: "Devoirs à rendre, rendus, corrections notées", icon: "📗" },
   { href: "/education/presences", label: "Présences", desc: "Scan QR, appel, retards, absences", icon: "✅" },
   { href: "/education/notes", label: "Notes & bulletins", desc: "Évaluations, moyennes, rangs", icon: "📝" },
   { href: "/education/paiements", label: "Paiements scolaires", desc: "Frais, reçus, impayés", icon: "💰" },
