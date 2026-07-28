@@ -278,6 +278,7 @@ export const SIDEBAR_GROUPS: DashboardGroup[] = [
     title: "Administration",
     items: [
       { href: "/utilisateurs", label: "Utilisateurs", icon: Users, module: "utilisateurs", requires: ["isAdminLike"] },
+      { href: "/parametres/permissions", label: "Droits & permissions", icon: ShieldCheck, requires: ["isAdminLike"] },
       { href: "/pointage", label: "Pointage", icon: ClipboardCheck, module: "pointage" },
       { href: "/attendance-scan", label: "Pointage QR", icon: QrCode, module: "pointage" },
       { href: "/parametres-pointage", label: "Paramètres de pointage", icon: Settings, module: "pointage", requires: ["isAdminLike"] },
@@ -422,6 +423,7 @@ export const DASHBOARD_SECTIONS: DashboardGroup[] = [
     title: "Administration",
     items: [
       { href: "/utilisateurs", label: "Utilisateurs", description: "Comptes, rôles et permissions.", icon: Users, module: "utilisateurs", requires: ["isAdminLike"] },
+      { href: "/parametres/permissions", label: "Droits & permissions", description: "Autorisations des employés par module et sous-module.", icon: ShieldCheck, requires: ["isAdminLike"] },
       { href: "/entrepots", label: "Entrepôts", description: "Gestion des entrepôts.", icon: Warehouse, module: "entrepots", requires: ["isAdminLike"] },
       { href: "/emplacements", label: "Emplacements", description: "Emplacements de stockage.", icon: MapPin, module: "emplacements", requires: ["isAdminLike"] },
       { href: "/pointage", label: "Pointage", description: "Pointage du personnel.", icon: ClipboardCheck, module: "pointage" },
