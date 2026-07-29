@@ -38,6 +38,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authFetch } from "../lib/api";
+import { usePermissions } from "../lib/permissions";
 import { appProduct, productConfig } from "../lib/product-config";
 import AIChatWidget from "../components/AIChatWidget";
 import InstallPWAButton from "../../components/InstallPWAButton";
@@ -198,9 +199,15 @@ export default function DashboardPage() {
   );
 
   const companyModules = userData?.modules || {};
+  const { isEnabled: rbacEnabled, can: rbacCan } = usePermissions();
   const moduleEnabled = useMemo(
-    () => createModuleEnabled(companyModules, isSuperAdmin),
-    [companyModules, isSuperAdmin]
+    () => {
+      const base = createModuleEnabled(companyModules, isSuperAdmin);
+      // RBAC : masquage automatique si module/sous-module désactivé pour
+      // l'entreprise ou si l'employé n'a pas le droit de voir (product-agnostique).
+      return (key: string) => base(key) && rbacEnabled(key) && rbacCan(key, "view");
+    },
+    [companyModules, isSuperAdmin, rbacEnabled, rbacCan]
   );
 
   // Identité affichée (source de vérité = hook entreprise).
@@ -763,6 +770,15 @@ export default function DashboardPage() {
                 </li>
               </Link>
             </>
+          )}
+
+          {isAdminLike && (
+            <Link href="/parametres/permissions">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <ShieldCheck size={20} />
+                Droits & permissions
+              </li>
+            </Link>
           )}
 
           <button
