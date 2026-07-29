@@ -781,6 +781,15 @@ export default function DashboardPage() {
             </Link>
           )}
 
+          {isAdminLike && moduleEnabled("import") && (
+            <Link href="/import">
+              <li className="p-3 hover:bg-gray-800 rounded-lg cursor-pointer flex items-center gap-3">
+                <FileText size={20} />
+                Centre d&apos;importation
+              </li>
+            </Link>
+          )}
+
           <button
             onClick={handleLogout}
             className="w-full text-left p-3 bg-red-600 hover:bg-red-700 rounded-lg cursor-pointer font-bold text-white mt-8 flex items-center gap-3"
