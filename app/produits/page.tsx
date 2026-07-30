@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ImportButton from "../components/ImportButton";
+import { appProduct } from "../lib/product-config";
 
 const marketplaceCategories = [
   "Alimentation",
@@ -424,9 +426,13 @@ const handleSubmit = async (e: any) => {
         Gestion des références produits, images et emplacements.
       </p>
 
-      <p className="text-sm text-gray-500 mb-8">
+      <p className="text-sm text-gray-500 mb-4">
         Rôle connecté : {userRole || "non connecté"}
       </p>
+
+      <div className="mb-8">
+        <ImportButton profile={appProduct === "malilink" ? "malilink.marketplace_products" : "triangle.products"} label="Importer des produits" />
+      </div>
 
       {canAddProduct && (
         <form

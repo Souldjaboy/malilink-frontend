@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { authFetch } from "../lib/api";
 import { formatFCFA } from "../lib/format";
+import ImportButton from "../components/ImportButton";
 
 const emptyBank = {
   bank_name: "",
@@ -252,12 +254,16 @@ export default function ComptabilitePage() {
             Banques, caisses, encaissements, décaissements, demandes, salaires et états financiers.
           </p>
         </div>
-        <button
-          onClick={loadAll}
-          className="rounded-lg bg-black px-5 py-3 font-bold text-white"
-        >
-          Actualiser
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <ImportButton profile="triangle.expenses" label="Importer des dépenses" />
+          <Link href="/comptabilite/clotures" className="rounded-lg bg-slate-700 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800">Clôtures mensuelles</Link>
+          <button
+            onClick={loadAll}
+            className="rounded-lg bg-black px-5 py-3 font-bold text-white"
+          >
+            Actualiser
+          </button>
+        </div>
       </div>
 
       {message && <div className="mb-5 rounded-lg bg-yellow-100 p-4 font-bold">{message}</div>}

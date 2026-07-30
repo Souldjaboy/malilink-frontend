@@ -37,8 +37,19 @@ export default function ImportWizardPage() {
   const profile = useMemo(() => profiles.find((p) => p.key === profileKey) || null, [profiles, profileKey]);
   const fields = useMemo(() => (profile ? ["", ...profile.requiredFields, ...profile.optionalFields] : [""]), [profile]);
 
+  const [backPath, setBackPath] = useState("");
+
   useEffect(() => {
-    authFetch(`/import/profiles?product_code=${appProduct}`).then(async (r) => { if (r.ok) setProfiles(await r.json()); });
+    const sp = new URLSearchParams(window.location.search);
+    const preType = sp.get("type");
+    const back = sp.get("back");
+    if (back) setBackPath(back);
+    authFetch(`/import/profiles?product_code=${appProduct}`).then(async (r) => {
+      if (!r.ok) return;
+      const list = await r.json();
+      setProfiles(list);
+      if (preType && list.some((p: Profile) => p.key === preType)) { setProfileKey(preType); setStep(2); }
+    });
   }, []);
 
   const reset = () => { setStep(1); setFile(null); setJob(""); setAnalysis(null); setColumns([]); setMapping({}); setSummary(null); setSim(null); setReport(null); setAlreadyImported(null); setMsg(""); };
@@ -262,6 +273,7 @@ export default function ImportWizardPage() {
             <div className="mt-5 flex flex-wrap gap-3">
               <button onClick={rollback} disabled={busy} className="rounded-xl bg-red-100 px-4 py-3 font-bold text-red-700">Annuler l&apos;importation (rollback)</button>
               <Link href="/import/historique" className="rounded-xl border border-gray-300 px-4 py-3 font-bold text-gray-700">Voir l&apos;historique</Link>
+              {backPath && <Link href={backPath} className="rounded-xl border border-gray-300 px-4 py-3 font-bold text-gray-700">Revenir au module</Link>}
               <button onClick={reset} className="rounded-xl bg-yellow-500 px-6 py-3 font-black text-black">Nouvelle importation</button>
             </div>
           </section>
