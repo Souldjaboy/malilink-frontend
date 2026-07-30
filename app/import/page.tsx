@@ -174,7 +174,14 @@ export default function ImportWizardPage() {
           <section className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-black text-gray-900">1. Type d&apos;importation</h2>
             <p className="mt-1 text-sm text-gray-500">Produit : <b>{appProduct}</b></p>
-            <select className="mt-3 w-full rounded-xl border border-gray-300 p-3 text-gray-900" value={profileKey} onChange={(e) => setProfileKey(e.target.value)}>
+
+            <button onClick={() => setProfileKey("auto")} className={`mt-3 w-full rounded-xl border-2 p-4 text-left transition ${profileKey === "auto" ? "border-emerald-600 bg-emerald-50" : "border-gray-200 hover:border-gray-300"}`}>
+              <p className="font-black text-gray-900">🔍 Détection automatique <span className="ml-1 rounded bg-emerald-600 px-2 py-0.5 text-xs text-white">recommandé</span></p>
+              <p className="text-sm text-gray-500">Le logiciel reconnaît seul le type (factures, trésorerie, suivi…) et les colonnes.</p>
+            </button>
+
+            <p className="mt-4 mb-1 text-sm font-semibold text-gray-600">…ou choisir manuellement :</p>
+            <select className="w-full rounded-xl border border-gray-300 p-3 text-gray-900" value={profileKey === "auto" ? "" : profileKey} onChange={(e) => setProfileKey(e.target.value)}>
               <option value="">Choisir un type…</option>
               {profiles.map((p) => <option key={p.key} value={p.key}>{p.name}</option>)}
             </select>
