@@ -33,6 +33,9 @@ export default function ImportWizardPage() {
   const [alreadyImported, setAlreadyImported] = useState<Record<string, unknown> | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [savedMappings, setSavedMappings] = useState<{ id: number; name: string; mapping: Record<string, string>; is_default: boolean }[]>([]);
+  const [appliedMapping, setAppliedMapping] = useState<string | null>(null);
+  const [headerSig, setHeaderSig] = useState("");
 
   const profile = useMemo(() => profiles.find((p) => p.key === profileKey) || null, [profiles, profileKey]);
   const fields = useMemo(() => (profile ? ["", ...profile.requiredFields, ...profile.optionalFields] : [""]), [profile]);
@@ -52,7 +55,16 @@ export default function ImportWizardPage() {
     });
   }, []);
 
-  const reset = () => { setStep(1); setFile(null); setJob(""); setAnalysis(null); setColumns([]); setMapping({}); setSummary(null); setSim(null); setReport(null); setAlreadyImported(null); setMsg(""); };
+  const reset = () => { setStep(1); setFile(null); setJob(""); setAnalysis(null); setColumns([]); setMapping({}); setSummary(null); setSim(null); setReport(null); setAlreadyImported(null); setMsg(""); setSavedMappings([]); setAppliedMapping(null); };
+
+  const downloadBlob = async (path: string, filename: string) => {
+    const res = await authFetch(path);
+    if (!res.ok) { setMsg("Erreur téléchargement."); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const upload = useCallback(async () => {
     if (!file || !profileKey) return;
@@ -69,8 +81,27 @@ export default function ImportWizardPage() {
     setColumns(data.columns || []);
     setMapping(data.suggestedMapping || {});
     setAlreadyImported(data.alreadyImported || null);
+    setAppliedMapping(data.appliedMapping || null);
+    setHeaderSig(data.headerSignature || "");
+    const mres = await authFetch(`/import/mappings?profile_key=${encodeURIComponent(profileKey)}`);
+    if (mres.ok) setSavedMappings(await mres.json());
     setStep(3);
   }, [file, profileKey]);
+
+  const saveMapping = async () => {
+    const name = window.prompt("Nom du mapping à enregistrer :");
+    if (!name) return;
+    const res = await authFetch("/import/mappings", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile_key: profileKey, name, mapping, header_signature: headerSig, is_default: false }),
+    });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); return setMsg(d?.error || "Échec de l'enregistrement."); }
+    setMsg(`✅ Mapping « ${name} » enregistré.`);
+    const mres = await authFetch(`/import/mappings?profile_key=${encodeURIComponent(profileKey)}`);
+    if (mres.ok) setSavedMappings(await mres.json());
+  };
+
+  const downloadReport = (fmt: "xlsx" | "csv") => downloadBlob(`/import/jobs/${job}/report?format=${fmt}`, `rapport-import-${job}.${fmt}`);
 
   const validate = async () => {
     setBusy(true); setMsg("");
@@ -176,6 +207,15 @@ export default function ImportWizardPage() {
             <h2 className="text-lg font-black text-gray-900">3. Feuilles & correspondance des champs</h2>
             <p className="mt-1 text-sm text-gray-500">Feuilles : {analysis.sheets.map((s) => `${s.name} (${s.rows})`).join(", ")} · {analysis.rowCount} lignes de données</p>
             {alreadyImported && <div className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-800">⚠ Ce fichier a déjà été importé le {new Date(String(alreadyImported.created_at)).toLocaleString("fr-FR")}. Continuez seulement si c&apos;est volontaire.</div>}
+            {appliedMapping && <div className="mt-3 rounded-xl bg-green-50 p-3 text-sm font-semibold text-green-800">✓ Mapping enregistré « {appliedMapping} » appliqué automatiquement.</div>}
+            {savedMappings.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold text-gray-600">Mappings enregistrés :</span>
+                {savedMappings.map((sm) => (
+                  <button key={sm.id} onClick={() => { setMapping(sm.mapping); setAppliedMapping(sm.name); }} className="rounded-lg bg-gray-200 px-3 py-1 text-xs font-bold text-gray-800 hover:bg-gray-300">{sm.name}{sm.is_default ? " ★" : ""}</button>
+                ))}
+              </div>
+            )}
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[600px] text-sm">
                 <thead><tr className="text-left text-gray-500"><th className="p-2">Colonne du fichier</th><th className="p-2">Type détecté</th><th className="p-2">Confiance</th><th className="p-2">Champ cible</th></tr></thead>
@@ -200,8 +240,9 @@ export default function ImportWizardPage() {
                 <input type="checkbox" checked={allowNegative} onChange={(e) => setAllowNegative(e.target.checked)} /> Autoriser le stock négatif
               </label>
             )}
-            <div className="mt-5 flex gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <button onClick={reset} className="rounded-xl border border-gray-300 px-4 py-3 font-bold text-gray-700">Recommencer</button>
+              <button onClick={saveMapping} className="rounded-xl border border-gray-300 px-4 py-3 font-bold text-gray-700">Enregistrer le mapping</button>
               <button disabled={busy} onClick={validate} className="rounded-xl bg-yellow-500 px-6 py-3 font-black text-black disabled:opacity-50">{busy ? "Validation…" : "Valider les données"}</button>
             </div>
           </section>
@@ -271,6 +312,8 @@ export default function ImportWizardPage() {
               {Object.entries(report).map(([k, v]) => <Stat key={k} label={k} value={v} />)}
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
+              <button onClick={() => downloadReport("xlsx")} className="rounded-xl bg-blue-700 px-4 py-3 font-bold text-white">Rapport Excel</button>
+              <button onClick={() => downloadReport("csv")} className="rounded-xl border border-gray-300 px-4 py-3 font-bold text-gray-700">Rapport CSV</button>
               <button onClick={rollback} disabled={busy} className="rounded-xl bg-red-100 px-4 py-3 font-bold text-red-700">Annuler l&apos;importation (rollback)</button>
               <Link href="/import/historique" className="rounded-xl border border-gray-300 px-4 py-3 font-bold text-gray-700">Voir l&apos;historique</Link>
               {backPath && <Link href={backPath} className="rounded-xl border border-gray-300 px-4 py-3 font-bold text-gray-700">Revenir au module</Link>}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatFCFA } from "../lib/format";
+import ImportButton from "../components/ImportButton";
 
 export default function StocksPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -393,6 +394,11 @@ export default function StocksPage() {
       <p className="text-gray-500 mt-2 mb-2">
         Suivi des entrées, sorties, transferts et inventaires avec emplacements.
       </p>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        <ImportButton profile="triangle.stock_movement" label="Importer des mouvements" />
+        <ImportButton profile="triangle.transfer" label="Importer des transferts" className="inline-flex items-center gap-2 rounded-xl bg-slate-700 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800" />
+      </div>
 
       <p className="text-sm text-gray-500 mb-8">
         Rôle connecté : {userRole || "non connecté"}

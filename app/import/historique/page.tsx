@@ -30,6 +30,15 @@ export default function ImportHistoryPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const downloadReport = async (uid: string) => {
+    const res = await authFetch(`/import/jobs/${uid}/report?format=xlsx`);
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = `rapport-import-${uid}.xlsx`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -55,7 +64,7 @@ export default function ImportHistoryPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] text-sm">
-                <thead><tr className="text-left text-gray-500"><th className="p-2">Fichier</th><th className="p-2">Type</th><th className="p-2">Date</th><th className="p-2">Lignes</th><th className="p-2">Importées</th><th className="p-2">Doublons</th><th className="p-2">Statut</th></tr></thead>
+                <thead><tr className="text-left text-gray-500"><th className="p-2">Fichier</th><th className="p-2">Type</th><th className="p-2">Date</th><th className="p-2">Lignes</th><th className="p-2">Importées</th><th className="p-2">Doublons</th><th className="p-2">Statut</th><th className="p-2">Rapport</th></tr></thead>
                 <tbody>
                   {jobs.map((j) => (
                     <tr key={j.job_uid} className="border-t border-gray-100">
@@ -66,6 +75,7 @@ export default function ImportHistoryPage() {
                       <td className="p-2 font-bold text-gray-900">{j.imported_rows}</td>
                       <td className="p-2 text-gray-600">{j.duplicate_rows}</td>
                       <td className="p-2"><span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLOR[j.status] || "bg-gray-200"}`}>{j.status}</span></td>
+                      <td className="p-2"><button onClick={() => downloadReport(j.job_uid)} className="rounded-lg bg-blue-700 px-3 py-1 text-xs font-bold text-white hover:bg-blue-800">Excel</button></td>
                     </tr>
                   ))}
                 </tbody>
