@@ -20,6 +20,9 @@ export default function FacturesPage() {
   const [items, setItems] = useState<Facture[]>([]);
   const [totals, setTotals] = useState<Totals | null>(null);
   const [status, setStatus] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [form, setForm] = useState({ reference: "", invoice_date: "", site: "", description: "", invoiced_amount: "", paid_amount: "", payment_date: "", observations: "" });
 
   const load = useCallback(async () => {
     const q = status ? `?status=${status}` : "";
@@ -29,16 +32,49 @@ export default function FacturesPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const create = async () => {
+    setMsg("");
+    if (!form.reference.trim()) return setMsg("Référence requise.");
+    const res = await authFetch("/factures", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...form, invoiced_amount: Number(form.invoiced_amount) || 0, paid_amount: Number(form.paid_amount) || 0 }),
+    });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); return setMsg(d?.error || "Erreur."); }
+    setMsg("✅ Facture enregistrée (statut calculé automatiquement).");
+    setForm({ reference: "", invoice_date: "", site: "", description: "", invoiced_amount: "", paid_amount: "", payment_date: "", observations: "" });
+    setShowForm(false);
+    await load();
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-3xl font-black text-gray-900">Factures</h1>
           <div className="flex gap-2">
+            <button onClick={() => setShowForm((v) => !v)} className="rounded-xl bg-yellow-500 px-4 py-2 font-black text-black hover:bg-yellow-400">+ Nouvelle facture</button>
             <ImportButton profile="auto" label="Importer des factures" />
             <Link href="/dashboard" className="rounded-xl border border-gray-300 px-4 py-2 font-bold text-gray-700">← Tableau de bord</Link>
           </div>
         </div>
+
+        {msg && <div className="rounded-xl bg-blue-50 p-3 font-semibold text-blue-900">{msg}</div>}
+
+        {showForm && (
+          <section className="rounded-2xl bg-white p-6 shadow">
+            <h2 className="text-lg font-black text-gray-900">Nouvelle facture</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <input className="rounded-xl border border-gray-300 p-3 text-gray-900" placeholder="Référence *" value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} />
+              <input type="date" className="rounded-xl border border-gray-300 p-3 text-gray-900" value={form.invoice_date} onChange={(e) => setForm({ ...form, invoice_date: e.target.value })} />
+              <input className="rounded-xl border border-gray-300 p-3 text-gray-900" placeholder="Site / Localité" value={form.site} onChange={(e) => setForm({ ...form, site: e.target.value })} />
+              <input className="rounded-xl border border-gray-300 p-3 text-gray-900 lg:col-span-3" placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <input type="number" className="rounded-xl border border-gray-300 p-3 text-gray-900" placeholder="Montant facturé" value={form.invoiced_amount} onChange={(e) => setForm({ ...form, invoiced_amount: e.target.value })} />
+              <input type="number" className="rounded-xl border border-gray-300 p-3 text-gray-900" placeholder="Montant payé" value={form.paid_amount} onChange={(e) => setForm({ ...form, paid_amount: e.target.value })} />
+              <input type="date" className="rounded-xl border border-gray-300 p-3 text-gray-900" value={form.payment_date} onChange={(e) => setForm({ ...form, payment_date: e.target.value })} />
+            </div>
+            <button onClick={create} className="mt-4 rounded-xl bg-emerald-600 px-6 py-3 font-black text-white hover:bg-emerald-700">Enregistrer la facture</button>
+          </section>
+        )}
 
         {totals && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

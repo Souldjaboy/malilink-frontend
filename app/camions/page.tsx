@@ -66,7 +66,7 @@ export default function CamionsPage() {
                 <tbody>
                   {items.map((c) => (
                     <tr key={c.id} className="border-t border-gray-100">
-                      <td className="p-2 font-bold text-gray-900">{c.code}</td>
+                      <td className="p-2 font-bold text-blue-700"><Link href={`/camions/${c.id}`} className="hover:underline">{c.code}</Link></td>
                       <td className="p-2 text-gray-600">{c.immatriculation || "—"}</td>
                       <td className="p-2 text-gray-600">{c.chauffeur || "—"}</td>
                       <td className="p-2 text-gray-600">{c.operations}</td>

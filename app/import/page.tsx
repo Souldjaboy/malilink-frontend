@@ -8,7 +8,7 @@ import { usePermissions } from "../lib/permissions";
 
 type Profile = { key: string; name: string; module_key: string; requiredFields: string[]; optionalFields: string[] };
 type Column = { header: string; suggestedField: string | null; valueType: string; confidence: number; level: string };
-type Summary = { total: number; valid: number; invalid: number; warnings: number; duplicates: number };
+type Summary = { total: number; valid: number; invalid: number; warnings: number; duplicates: number; existing?: number; new?: number };
 type SimRow = { __row: number; product_name: string; movementType: string; stockBefore: number; delta: number; stockAfter: number; willCreateProduct: boolean; blocked: boolean };
 
 const LEVEL_COLOR: Record<string, string> = { high: "text-green-700", medium: "text-amber-600", low: "text-red-600" };
@@ -41,6 +41,11 @@ export default function ImportWizardPage() {
   const fields = useMemo(() => (profile ? ["", ...profile.requiredFields, ...profile.optionalFields] : [""]), [profile]);
 
   const [backPath, setBackPath] = useState("");
+  const [companyName, setCompanyName] = useState("");
+
+  useEffect(() => {
+    authFetch("/company-settings/current").then(async (r) => { if (r.ok) { const d = await r.json(); setCompanyName(d.company_name || ""); } });
+  }, []);
 
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
@@ -199,6 +204,9 @@ export default function ImportWizardPage() {
         {step === 2 && (
           <section className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-black text-gray-900">2. Sélection du fichier</h2>
+            <div className="mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+              🏢 Entreprise destinataire : <b>{companyName || "votre entreprise"}</b>. Les données seront enregistrées uniquement dans cette entreprise.
+            </div>
             <input type="file" accept=".xlsx,.xls,.csv" className="mt-3 w-full text-sm" onChange={(e) => setFile(e.target.files?.[0] || null)} />
             {file && <p className="mt-2 text-sm text-gray-600">{file.name} — {(file.size / 1024).toFixed(0)} Ko</p>}
             <div className="mt-5 flex gap-3">
@@ -259,12 +267,16 @@ export default function ImportWizardPage() {
         {step === 5 && summary && (
           <section className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-lg font-black text-gray-900">5. Validation</h2>
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               <Stat label="Total" value={summary.total} />
-              <Stat label="Valides" value={summary.valid} color="text-green-700" />
+              <Stat label="Nouvelles" value={summary.new ?? summary.valid} color="text-green-700" />
+              <Stat label="Déjà importées" value={summary.existing ?? 0} color="text-blue-700" />
               <Stat label="Invalides" value={summary.invalid} color="text-red-600" />
               <Stat label="Doublons" value={summary.duplicates} color="text-amber-600" />
             </div>
+            {(summary.existing ?? 0) > 0 && (
+              <p className="mt-3 rounded-xl bg-blue-50 p-3 text-sm font-semibold text-blue-900">Import incrémental : {summary.existing} ligne(s) déjà importée(s) seront ignorées ; seules les {summary.new ?? summary.valid} nouvelles lignes seront ajoutées.</p>
+            )}
             <div className="mt-5 flex gap-3">
               <button onClick={() => setStep(3)} className="rounded-xl border border-gray-300 px-4 py-3 font-bold text-gray-700">Corriger le mapping</button>
               <button disabled={busy || summary.valid === 0} onClick={simulate} className="rounded-xl bg-yellow-500 px-6 py-3 font-black text-black disabled:opacity-50">{busy ? "Simulation…" : "Simuler les conséquences"}</button>
