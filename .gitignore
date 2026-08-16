@@ -13,3 +13,7 @@ _archives/
 *backup*
 *.bak
 *.old
+
+# Fichiers générés localement
+tsconfig.tsbuildinfo
+.claude/

@@ -276,13 +276,16 @@ export default function MarketplacePage() {
             ) : (
               <div className="mb-4 flex h-40 items-center justify-center rounded-xl bg-gray-100 font-bold text-gray-400">Image produit</div>
             )}
-            <p className="text-sm font-bold text-gray-500">{product.vendor_name || "Vendeur"}</p>
+            <p className="text-sm font-bold text-gray-500">{product.vendor?.name || "Vendeur"}</p>
             <h2 className="mt-1 text-xl font-black">{product.title}</h2>
             <p className="mt-2 text-sm text-gray-500">{product.category || product.reference || "-"}</p>
             <p className="mt-3 text-2xl font-black text-green-700">{formatFCFA(product.price)}</p>
-            <p className="text-sm text-gray-500">Stock : {Number(product.display_stock || product.stock || 0).toLocaleString("fr-FR")}</p>
+            {/* Disponibilité seule : le niveau de stock est une donnée interne. */}
+            <p className="text-sm text-gray-500">
+              {product.availability === "OutOfStock" ? "Momentanément indisponible" : "En stock"}
+            </p>
             <div className="mt-4 flex gap-2">
-              <Link href={`/marketplace/product/${product.id}`} className="flex-1 rounded-xl bg-black px-4 py-3 text-center font-bold text-white">Voir</Link>
+              <Link href={product.url || `/produit/${product.id}`} className="flex-1 rounded-xl bg-black px-4 py-3 text-center font-bold text-white">Voir</Link>
               <button onClick={() => addToCart(product)} className="flex-1 rounded-xl bg-yellow-500 px-4 py-3 font-bold text-black">Ajouter</button>
             </div>
           </article>
