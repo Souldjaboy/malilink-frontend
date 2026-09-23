@@ -44,6 +44,8 @@ import {
   Stethoscope,
   UtensilsCrossed,
   Users2,
+  Video,
+  Megaphone,
 } from "lucide-react";
 import { isProductModuleEnabled, type ProductModule } from "../../lib/product-config";
 import type { DashboardGroup, ModuleEnabledFn, PermissionFlags } from "./dashboardTypes";
@@ -421,6 +423,7 @@ export const DASHBOARD_SECTIONS: DashboardGroup[] = [
       { href: "/social", label: "Social", description: "Réseau social MaliLink.", icon: Users2, module: "social" },
       { href: "/chat", label: "Chat", description: "Messagerie interne de l'équipe.", icon: MessageCircle, module: "chat" },
       { href: "/notifications", label: "Notifications", description: "Alertes et notifications.", icon: Bell, module: "notifications" },
+      { href: "/marketing", label: "Marketing & Réseaux sociaux", description: "Comptes professionnels, publications, calendrier et campagnes.", icon: Megaphone, module: "marketing" },
       { href: "/recherche", label: "Recherche", description: "Recherche globale dans l'application.", icon: Search, alwaysShow: true },
     ],
   },
@@ -433,6 +436,7 @@ export const DASHBOARD_SECTIONS: DashboardGroup[] = [
       { href: "/import", label: "Centre d'importation", description: "Importer Excel/CSV : produits, stock, comptabilité…", icon: Upload, module: "import", requires: ["isAdminLike"] },
       { href: "/entrepots", label: "Entrepôts", description: "Gestion des entrepôts.", icon: Warehouse, module: "entrepots", requires: ["isAdminLike"] },
       { href: "/emplacements", label: "Emplacements", description: "Emplacements de stockage.", icon: MapPin, module: "emplacements", requires: ["isAdminLike"] },
+      { href: "/cameras", label: "Caméras & Sécurité", description: "Inventaire et organisation des caméras, par site.", icon: Video, module: "cameras" },
       { href: "/pointage", label: "Pointage", description: "Pointage du personnel.", icon: ClipboardCheck, module: "pointage" },
       { href: "/attendance-scan", label: "Pointage QR", description: "Pointage par scan de badge QR.", icon: QrCode, module: "pointage" },
       { href: "/alertes", label: "Alertes", description: "Alertes stock et opérations.", icon: TriangleAlert, module: "alertes", requiresAny: ["canManageWarehouse", "isReadOnlyRole"] },

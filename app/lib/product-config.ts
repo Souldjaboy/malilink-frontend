@@ -35,7 +35,9 @@ export type ProductModule =
   | "education"
   | "social"
   | "voyage"
-  | "wallet";
+  | "wallet"
+  | "cameras"
+  | "marketing";
 
 type ProductTheme = {
   primary: string;
@@ -110,6 +112,9 @@ const baseModules: Record<ProductModule, boolean> = {
   social: false,
   voyage: false,
   wallet: false,
+  // Modules génériques : ouverts produit par produit, jamais par défaut.
+  cameras: false,
+  marketing: false,
 };
 
 const configs: Record<AppProduct, ProductConfig> = {
@@ -221,6 +226,8 @@ const configs: Record<AppProduct, ProductConfig> = {
       voyage: true,
       // Wallet interne (grand livre, transferts internes)
       wallet: true,
+      cameras: true,
+      marketing: true,
     },
     disabledRoutePrefixes: [],
     allowedRoutePrefixes: [],
@@ -373,6 +380,8 @@ const routeModuleRules: Array<{ prefixes: string[]; module: ProductModule }> = [
   { prefixes: ["/social"], module: "social" },
   { prefixes: ["/travel"], module: "voyage" },
   { prefixes: ["/wallet"], module: "wallet" },
+  { prefixes: ["/cameras"], module: "cameras" },
+  { prefixes: ["/marketing"], module: "marketing" },
 ];
 
 export function isRouteAvailable(pathname: string) {
