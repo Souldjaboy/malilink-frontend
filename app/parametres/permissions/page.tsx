@@ -13,9 +13,6 @@ const ACTION_LABELS: Record<string, string> = {
   view: "Voir", create: "Créer", update: "Modifier", delete: "Supprimer", import: "Importer",
   export: "Exporter", print: "Imprimer", validate: "Valider", cancel: "Annuler", share: "Partager",
 };
-const FULL_ROLES = ["super_admin", "admin", "administrateur", "manager", "direction", "directeur", "gerant"];
-const READONLY_ROLES = ["lecture_seule", "readonly", "client", "customer", "invite"];
-const WRITE_ACTIONS = ["view", "create", "update", "export", "print"];
 
 export default function PermissionsPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -27,12 +24,19 @@ export default function PermissionsPage() {
   const [copyFrom, setCopyFrom] = useState<string>("");
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
+  // Défauts du rôle calculés par le backend (mêmes règles que les gardes API).
+  const [roleDefaults, setRoleDefaults] = useState<PermMap>({});
+  // Modules fermés pour l'entreprise : aucun droit individuel ne peut les ouvrir.
+  const [indisponibles, setIndisponibles] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     authFetch("/users").then(async (r) => {
       if (r.ok) {
         const rows = await r.json();
         setEmployees(rows.map((u: Record<string, unknown>) => ({ id: Number(u.id), fullname: String(u.fullname || ""), role: String(u.role || ""), email: String(u.email || "") })));
+        // Arrivée depuis Utilisateurs → « Droits » : l'employé est pré-sélectionné.
+        const demande = new URLSearchParams(window.location.search).get("user");
+        if (demande && rows.some((u: Record<string, unknown>) => String(u.id) === demande)) setSelectedId(demande);
       }
     });
     authFetch("/rbac/registry").then(async (r) => {
@@ -72,7 +76,13 @@ export default function PermissionsPage() {
     if (!res.ok) { setMsg("Impossible de charger les droits."); return; }
     const data = await res.json();
     setSelectedRole(data.user?.role || "");
-    setPerms(rowsFromApi(data.permissions || [], allKeys));
+    /* Avant : une case sans ligne enregistrée s'affichait DÉCOCHÉE alors que
+       l'employé avait bel et bien l'accès. L'écran montre désormais la valeur
+       qui s'applique réellement : la ligne enregistrée, sinon le défaut du
+       rôle. Ce qui est coché est autorisé ; ce qui est décoché est refusé. */
+    setPerms(data.effective || rowsFromApi(data.permissions || [], allKeys));
+    setRoleDefaults(data.role_defaults || {});
+    setIndisponibles(new Set<string>(data.unavailable_keys || []));
   }, [registry, allKeys, rowsFromApi]);
 
   useEffect(() => { if (selectedId) loadEmployee(selectedId); }, [selectedId, loadEmployee]);
@@ -92,13 +102,8 @@ export default function PermissionsPage() {
   };
 
   const resetFromRole = () => {
-    const r = (selectedRole || "").toLowerCase();
-    applyToAll((key, action) => {
-      if (FULL_ROLES.includes(r)) return true;
-      if (READONLY_ROLES.includes(r)) return action === "view";
-      return WRITE_ACTIONS.includes(action);
-    });
-    setMsg(`Droits réinitialisés selon le rôle « ${selectedRole || "standard"} ».`);
+    applyToAll((key, action) => roleDefaults[key]?.[action] === true);
+    setMsg(`Droits réinitialisés selon le rôle « ${selectedRole || "standard"} ». Pensez à enregistrer.`);
   };
 
   const copyFromEmployee = async () => {
@@ -106,7 +111,7 @@ export default function PermissionsPage() {
     const res = await authFetch(`/company/users/${copyFrom}/permissions`);
     if (!res.ok) { setMsg("Copie impossible."); return; }
     const data = await res.json();
-    setPerms(rowsFromApi(data.permissions || [], allKeys));
+    setPerms(data.effective || rowsFromApi(data.permissions || [], allKeys));
     setMsg("Droits copiés. Pensez à enregistrer.");
   };
 
@@ -191,6 +196,12 @@ export default function PermissionsPage() {
                 </select>
               </div>
 
+              <p className="mt-3 text-sm text-gray-600">
+                La première ligne porte sur le module entier : décocher « Voir » y masque tous ses
+                sous-modules. Chaque case cochée est réellement autorisée, et chaque case décochée
+                est refusée — dans le menu, par adresse directe et par l&apos;API.
+              </p>
+
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[900px] text-sm">
                   <thead>
@@ -201,14 +212,20 @@ export default function PermissionsPage() {
                   </thead>
                   <tbody>
                     {groupRows.map((key) => (
-                      <tr key={key} className="border-t border-gray-100">
-                        <td className={`sticky left-0 bg-white p-2 font-semibold ${key.includes(".") ? "pl-4 text-gray-600" : "text-gray-900"}`}>{label(key)}</td>
+                      <tr key={key} className={`border-t border-gray-100 ${indisponibles.has(key) ? "opacity-50" : ""}`}>
+                        <td className={`sticky left-0 bg-white p-2 font-semibold ${key.includes(".") ? "pl-4 text-gray-600" : "text-gray-900"}`}>
+                          {label(key)}
+                          {indisponibles.has(key) && !key.includes(".") && (
+                            <span className="block text-xs font-normal text-gray-500">Non activé pour l&apos;entreprise</span>
+                          )}
+                        </td>
                         {registry.actions.map((a) => (
                           <td key={a} className="p-2 text-center">
                             <input
                               type="checkbox"
                               className="h-4 w-4 accent-emerald-600"
-                              checked={!!perms[key]?.[a]}
+                              checked={!indisponibles.has(key) && !!perms[key]?.[a]}
+                              disabled={indisponibles.has(key)}
                               onChange={(e) => setCell(key, a, e.target.checked)}
                               aria-label={`${label(key)} — ${ACTION_LABELS[a] || a}`}
                             />

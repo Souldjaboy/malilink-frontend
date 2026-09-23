@@ -199,15 +199,17 @@ export default function DashboardPage() {
   );
 
   const companyModules = userData?.modules || {};
-  const { isEnabled: rbacEnabled, can: rbacCan } = usePermissions();
+  const { me: rbacMe, isEnabled: rbacEnabled, can: rbacCan } = usePermissions();
   const moduleEnabled = useMemo(
     () => {
-      const base = createModuleEnabled(companyModules, isSuperAdmin);
-      // RBAC : masquage automatique si module/sous-module désactivé pour
-      // l'entreprise ou si l'employé n'a pas le droit de voir (product-agnostique).
+      // Avant le chargement de /rbac/me : instantané de la connexion. Ensuite,
+      // seul le verdict du backend compte (société + plan + droits) — sans
+      // quoi un module réactivé par le super-admin restait masqué jusqu'à la
+      // reconnexion, et un module retiré restait visible.
+      const base = createModuleEnabled(rbacMe ? {} : companyModules, isSuperAdmin);
       return (key: string) => base(key) && rbacEnabled(key) && rbacCan(key, "view");
     },
-    [companyModules, isSuperAdmin, rbacEnabled, rbacCan]
+    [rbacMe, companyModules, isSuperAdmin, rbacEnabled, rbacCan]
   );
 
   // Identité affichée (source de vérité = hook entreprise).

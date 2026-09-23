@@ -28,7 +28,21 @@ const protectedRoutes = [
   "/parametres-pointage",
   "/parametres",
   "/education",
+  // Verticales et options de gestion : elles n'exigeaient même pas de
+  // connexion côté middleware.
+  "/restaurant",
+  "/immobilier",
+  "/automobile",
+  "/travel/partenaire",
+  "/wallet",
+  "/import",
+  "/livreur",
+  "/cameras",
+  "/marketing",
 ];
+
+// Pages publiques placées sous un préfixe protégé (menu QR d'un restaurant).
+const publicUnderProtected = ["/restaurant/public"];
 
 const protectedClientRoutes = [
   "/client/dashboard",
@@ -65,6 +79,25 @@ const moduleRouteMap: Record<string, string> = {
   "/pointage": "pointage",
   "/parametres-pointage": "pointage",
   "/partenaires": "partenaires",
+  // Verticales et options : absentes jusqu'ici, elles s'ouvraient par URL
+  // directe même désactivées. Le cookie lu ici porte désormais le verdict
+  // « Voir » calculé par le backend (société + droits de l'utilisateur).
+  "/restaurant": "restaurant",
+  "/education": "education",
+  "/immobilier": "immobilier",
+  "/automobile": "automobile",
+  "/travel/partenaire": "voyage",
+  "/wallet": "wallet",
+  "/social": "social",
+  "/chat": "chat",
+  "/utilisateurs": "utilisateurs",
+  "/activites": "activites",
+  "/badges": "badges",
+  "/alertes": "alertes",
+  "/import": "import",
+  "/livreur": "livraison",
+  "/cameras": "cameras",
+  "/marketing": "marketing",
 };
 
 function productFromRequest(req: NextRequest) {
@@ -142,9 +175,9 @@ export function middleware(req: NextRequest) {
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
 
-  const isProtected = protectedRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
-  );
+  const isProtected =
+    !publicUnderProtected.some((route) => pathname === route || pathname.startsWith(route + "/")) &&
+    protectedRoutes.some((route) => pathname === route || pathname.startsWith(route + "/"));
 
   if (!isProtected && !isClientProtected) return NextResponse.next();
 
@@ -290,6 +323,14 @@ export const config = {
     "/restaurant/:path*",
     "/immobilier/:path*",
     "/automobile/:path*",
+    "/education/:path*",
+    "/travel/partenaire/:path*",
+    "/wallet/:path*",
+    "/social/:path*",
+    "/import/:path*",
+    "/livreur/:path*",
+    "/cameras/:path*",
+    "/marketing/:path*",
     "/solutions/:path*",
     "/services/:path*",
     "/a-propos/:path*",

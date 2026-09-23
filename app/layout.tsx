@@ -3,6 +3,7 @@ import "./globals.css";
 import { appProduct, productConfig } from "./lib/product-config";
 import { defaultSeoDescription, seoActif, siteUrl } from "./lib/seo";
 import MaliLinkHomeButton from "./components/MaliLinkHomeButton";
+import ModuleRouteGuard from "./components/ModuleRouteGuard";
 
 /* Metadata commune à toutes les pages, appliquée uniquement à MaliLink.
    Triangle et Hafiya ne sont pas indexables : leur bloc reste identique au
@@ -64,6 +65,7 @@ export default function RootLayout({
       <body>
         {children}
         <MaliLinkHomeButton />
+        <ModuleRouteGuard />
       </body>
     </html>
   );
