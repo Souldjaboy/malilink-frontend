@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiUrl } from "../lib/api";
 import { formatFCFA } from "../lib/format";
 import { productConfig } from "../lib/product-config";
+import { useRegistrationModules } from "./useRegistrationModules";
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
 import SocialAuthButtons from "../../components/SocialAuthButtons";
 
@@ -41,42 +42,6 @@ const DEFAULT_PLANS = [
   },
 ];
 
-const AVAILABLE_MODULES = [
-  { key: "produits", label: "Produits" },
-  { key: "stock", label: "Stock" },
-  { key: "inventaire", label: "Inventaires" },
-  { key: "mouvements", label: "Mouvements" },
-  { key: "entrepots", label: "Entrepôts" },
-  { key: "emplacements", label: "Emplacements" },
-  { key: "ventes", label: "Ventes" },
-  { key: "pos", label: "POS / Caisse" },
-  { key: "paiements", label: "Paiements" },
-  { key: "recus", label: "Reçus" },
-  { key: "achats", label: "Achats" },
-  { key: "fournisseurs", label: "Fournisseurs" },
-  { key: "clients", label: "Clients" },
-  { key: "partenaires", label: "Partenaires" },
-  { key: "comptabilite", label: "Comptabilité" },
-  { key: "documents", label: "Documents" },
-  { key: "rapports", label: "Rapports" },
-  { key: "pointage", label: "Pointage" },
-  { key: "ia", label: "Assistant IA" },
-  { key: "marketplace", label: "Marketplace" },
-  { key: "commandes_recues", label: "Commandes reçues" },
-  { key: "restaurant", label: "Restaurant" },
-  { key: "automobile", label: "Automobile" },
-  { key: "immobilier", label: "Immobilier / Hôtel" },
-  { key: "laboratoire", label: "Laboratoire" },
-  { key: "alertes", label: "Alertes" },
-  { key: "activites", label: "Activités" },
-  { key: "utilisateurs", label: "Utilisateurs" },
-  { key: "parametres", label: "Paramètres" },
-];
-
-const defaultSelectedModules = AVAILABLE_MODULES.reduce((acc: Record<string, boolean>, module) => {
-  acc[module.key] = true;
-  return acc;
-}, {});
 
 export default function RegisterPage() {
 
@@ -107,8 +72,8 @@ export default function RegisterPage() {
       address: "",
       password: "",
     });
-  const [selectedModules, setSelectedModules] =
-    useState<Record<string, boolean>>(defaultSelectedModules);
+  // Modules : profil métier + offre + choix (même règles que le backend).
+  const modules = useRegistrationModules(formData.business_type, selectedPlan);
 
   const fetchPlans = async () => {
 
@@ -156,26 +121,9 @@ export default function RegisterPage() {
   };
 
   const toggleModule = (moduleKey: string) => {
-    const maxModules = Number(selectedPlan?.max_modules_allowed || 0);
-    const willEnable = selectedModules[moduleKey] === false;
-    if (
-      willEnable &&
-      maxModules > 0 &&
-      maxModules < 999 &&
-      Object.values(selectedModules).filter(Boolean).length >= maxModules
-    ) {
-      setError(`Le plan ${selectedPlan?.name || ""} autorise ${maxModules} modules maximum.`);
-      return;
-    }
-    setSelectedModules((current) => ({
-      ...current,
-      [moduleKey]: current[moduleKey] === false,
-    }));
-    setError("");
+    const refus = modules.toggle(moduleKey);
+    setError(refus || "");
   };
-
-  const selectedModuleCount = Object.values(selectedModules).filter(Boolean).length;
-  const selectedPlanModuleLimit = Number(selectedPlan?.max_modules_allowed || 0);
 
   const displayLimit = (value: any) => {
     const numberValue = Number(value || 0);
@@ -200,12 +148,13 @@ export default function RegisterPage() {
 
     }
 
-    if (
-      selectedPlanModuleLimit > 0 &&
-      selectedPlanModuleLimit < 999 &&
-      selectedModuleCount > selectedPlanModuleLimit
-    ) {
-      setError(`Le plan ${selectedPlan.name} autorise ${selectedPlanModuleLimit} modules maximum. Décochez des modules avant de continuer.`);
+    if (!formData.business_type) {
+      setError("Veuillez choisir votre type d'activité : il détermine vos modules.");
+      return;
+    }
+
+    if (modules.limit !== null && modules.added.length > modules.limit) {
+      setError(`L'offre ${selectedPlan.name} permet d'ajouter ${modules.limit} module(s) au-delà de votre activité.`);
       return;
     }
 
@@ -243,7 +192,7 @@ export default function RegisterPage() {
               plan_price:
                 selectedPlan.price_monthly,
               selected_modules:
-                selectedModules,
+                modules.payload,
             }),
           }
         );
@@ -470,54 +419,41 @@ export default function RegisterPage() {
             />
 
             <div className="md:col-span-2 rounded-2xl border p-4">
-              <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-black">
-                    Modules à activer
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {selectedPlanModuleLimit >= 999
-                      ? "Modules sélectionnés : illimité"
-                      : `Modules sélectionnés : ${selectedModuleCount}/${selectedPlanModuleLimit || AVAILABLE_MODULES.length}`}
-                  </p>
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-black">Modules de votre espace</h2>
+                <p className="text-sm text-gray-500">
+                  {!formData.business_type
+                    ? "Choisissez d'abord votre type d'activité : il sélectionne les modules utiles."
+                    : `Sélection « ${modules.profileLabel} ». Modules ajoutés au-delà de votre activité : ${modules.added.length}${modules.limit === null ? " (sans limite)" : ` / ${modules.limit}`}.`}
+                </p>
+              </div>
+              {formData.business_type && (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {modules.cards.map((module) => (
+                    <label
+                      key={module.key}
+                      className={`flex items-center gap-3 rounded-xl border p-3 font-bold ${
+                        module.excludedByPlan
+                          ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400"
+                          : module.selected
+                            ? "cursor-pointer border-yellow-400 bg-yellow-50 text-black"
+                            : "cursor-pointer border-gray-200 bg-white text-gray-500"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={module.selected}
+                        disabled={module.excludedByPlan}
+                        onChange={() => toggleModule(module.key)}
+                      />
+                      <span>
+                        {module.label}
+                        {module.excludedByPlan && <span className="block text-xs font-normal">Non inclus dans cette offre</span>}
+                      </span>
+                    </label>
+                  ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (selectedPlanModuleLimit > 0 && selectedPlanModuleLimit < 999) {
-                      const limited = AVAILABLE_MODULES.reduce((acc: Record<string, boolean>, module, index) => {
-                        acc[module.key] = index < selectedPlanModuleLimit;
-                        return acc;
-                      }, {});
-                      setSelectedModules(limited);
-                    } else {
-                      setSelectedModules(defaultSelectedModules);
-                    }
-                  }}
-                  className="rounded-xl bg-black px-4 py-2 text-sm font-bold text-white"
-                >
-                  {selectedPlanModuleLimit > 0 && selectedPlanModuleLimit < 999 ? "Activer limite du plan" : "Tout activer"}
-                </button>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {AVAILABLE_MODULES.map((module) => (
-                  <label
-                    key={module.key}
-                    className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 font-bold ${
-                      selectedModules[module.key] !== false
-                        ? "border-yellow-400 bg-yellow-50 text-black"
-                        : "border-gray-200 bg-white text-gray-500"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedModules[module.key] !== false}
-                      onChange={() => toggleModule(module.key)}
-                    />
-                    {module.label}
-                  </label>
-                ))}
-              </div>
+              )}
             </div>
 
             <button
