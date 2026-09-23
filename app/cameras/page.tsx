@@ -88,6 +88,7 @@ export default function CamerasPage() {
     creer: can("cameras", "create"),
     modifier: can("cameras", "update"),
     supprimer: can("cameras", "delete"),
+    voirSites: can("cameras.sites", "view"),
     sites: can("cameras.sites", "create"),
     enregistreurs: can("cameras.enregistreurs", "view"),
     creerEnregistreur: can("cameras.enregistreurs", "create"),
@@ -160,7 +161,8 @@ export default function CamerasPage() {
     return [...groupes.entries()];
   }, [cameras]);
 
-  const onglets = ONGLETS.filter(([cle]) => (cle === "enregistreurs" ? peut.enregistreurs : cle === "journal" ? peut.journal : true));
+  const onglets = ONGLETS.filter(([cle]) =>
+    cle === "enregistreurs" ? peut.enregistreurs : cle === "journal" ? peut.journal : cle === "sites" ? peut.voirSites : true);
 
   return (
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
@@ -340,7 +342,7 @@ export default function CamerasPage() {
           )}
 
           {/* ═══════════════ SITES ═══════════════ */}
-          {onglet === "sites" && (
+          {onglet === "sites" && peut.voirSites && (
             <section className="space-y-4">
               {peut.sites && (
                 <button onClick={() => setFormSite((v) => !v)} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-yellow-500 px-4 font-black">
