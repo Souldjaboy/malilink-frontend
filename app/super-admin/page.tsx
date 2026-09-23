@@ -11,8 +11,11 @@ import { productConfig } from "../lib/product-config";
 import CompanyModulesEditor from "./CompanyModulesEditor";
 
 const planFields = [
-  { key: "name", label: "Nom", type: "text" },
-  { key: "price_monthly", label: "Prix", type: "number" },
+  { key: "name", label: "Nom interne", type: "text" },
+  { key: "commercial_name", label: "Nom commercial", type: "text" },
+  { key: "price_monthly", label: "Prix mensuel", type: "number" },
+  // Coût PONCTUEL, distinct de l'abonnement mensuel.
+  { key: "installation_fee", label: "Installation", type: "number" },
   { key: "currency", label: "Devise", type: "text" },
   { key: "duration_days", label: "Durée jours", type: "number" },
   { key: "max_users", label: "Utilisateurs", type: "number" },
@@ -24,7 +27,18 @@ const planFields = [
   { key: "max_modules_allowed", label: "Modules autorisés", type: "number" },
   { key: "trial_days", label: "Essai jours", type: "number" },
   { key: "modules", label: "Modules", type: "textarea" },
+  { key: "highlights", label: "Arguments (un par ligne)", type: "textarea" },
+  { key: "excluded_modules", label: "Modules exclus", type: "text" },
 ];
+
+/* Les arguments et les modules exclus sont des listes : on les montre en
+   texte (une ligne par argument, virgules pour les modules) ; le backend
+   accepte les deux formes. */
+function valeurChamp(plan: Record<string, unknown>, key: string, type: string) {
+  const v = plan[key];
+  if (Array.isArray(v)) return v.join(type === "textarea" ? "\n" : ", ");
+  return (v as string | number | undefined) ?? "";
+}
 
 export default function SuperAdminPage() {
 
@@ -85,6 +99,10 @@ export default function SuperAdminPage() {
     trial_days: "",
     modules: "",
     is_active: true,
+    commercial_name: "",
+    installation_fee: "",
+    highlights: "",
+    excluded_modules: "",
   });
 
   const getHeaders = () => ({
@@ -277,6 +295,10 @@ export default function SuperAdminPage() {
             currency: newPlan.currency || "FCFA",
             duration_days: Number(newPlan.duration_days || 30),
             is_active: newPlan.is_active !== false,
+            commercial_name: newPlan.commercial_name,
+            installation_fee: Number(newPlan.installation_fee || 0),
+            highlights: newPlan.highlights,
+            excluded_modules: newPlan.excluded_modules,
           }),
         }
       );
@@ -299,6 +321,10 @@ export default function SuperAdminPage() {
         trial_days: "",
         modules: "",
         is_active: true,
+        commercial_name: "",
+        installation_fee: "",
+        highlights: "",
+        excluded_modules: "",
       });
 
       await fetchAll();
@@ -886,6 +912,8 @@ export default function SuperAdminPage() {
                 </th>
               ))}
               <th className="p-4 text-left text-black">Actif</th>
+              <th className="p-4 text-left text-black">Public</th>
+              <th className="p-4 text-left text-black">Recommandé</th>
 
               <th className="p-4 text-left text-black">
                 Actions
@@ -908,14 +936,14 @@ export default function SuperAdminPage() {
                   <td key={field.key} className="p-4 align-top">
                     {field.type === "textarea" ? (
                       <textarea
-                        value={plan[field.key] || ""}
+                        value={valeurChamp(plan, field.key, "textarea")}
                         onChange={(e) => updatePlanField(plan.id, field.key, e.target.value)}
                         className="min-h-20 w-56 border rounded-lg p-2 text-black"
                       />
                     ) : (
                       <input
                         type={field.type}
-                        value={plan[field.key] ?? ""}
+                        value={valeurChamp(plan, field.key, field.type)}
                         onChange={(e) => updatePlanField(plan.id, field.key, e.target.value)}
                         className="w-32 border rounded-lg p-2 text-black"
                       />
@@ -927,6 +955,22 @@ export default function SuperAdminPage() {
                     type="checkbox"
                     checked={plan.is_active !== false}
                     onChange={(e) => updatePlanField(plan.id, "is_active", e.target.checked)}
+                  />
+                </td>
+                <td className="p-4">
+                  <input
+                    type="checkbox"
+                    aria-label="Proposé à l'inscription"
+                    checked={plan.is_public === true}
+                    onChange={(e) => updatePlanField(plan.id, "is_public", e.target.checked)}
+                  />
+                </td>
+                <td className="p-4">
+                  <input
+                    type="checkbox"
+                    aria-label="Badge recommandé"
+                    checked={plan.is_recommended === true}
+                    onChange={(e) => updatePlanField(plan.id, "is_recommended", e.target.checked)}
                   />
                 </td>
 
