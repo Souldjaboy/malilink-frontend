@@ -244,6 +244,7 @@ function MaliLinkLanding() {
         <footer className="mx-auto mt-12 flex max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-2 border-t border-white/10 pt-6 text-sm text-white/60">
           <Link href="/login" className="text-white/60 hover:text-white">Connexion</Link>
           <Link href="/marketplace" className="text-white/60 hover:text-white">Marketplace</Link>
+          <Link href="/entreprises" className="text-white/60 hover:text-white">Entreprises</Link>
           <Link href="/solutions" className="text-white/60 hover:text-white">Solutions</Link>
           <Link href="/contact" className="text-white/60 hover:text-white">Contact</Link>
           <Link href="/installer-application" className="text-white/60 hover:text-white">

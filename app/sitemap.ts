@@ -18,6 +18,7 @@ import { sitemapPublic } from "./lib/public-api";
 const pagesFixes = [
   { path: "/", priority: 1, changeFrequency: "daily" as const },
   { path: "/marketplace", priority: 0.95, changeFrequency: "daily" as const },
+  { path: "/entreprises", priority: 0.9, changeFrequency: "daily" as const },
   { path: "/solutions", priority: 0.9, changeFrequency: "weekly" as const },
   { path: "/services", priority: 0.85, changeFrequency: "weekly" as const },
   { path: "/contact", priority: 0.8, changeFrequency: "monthly" as const },

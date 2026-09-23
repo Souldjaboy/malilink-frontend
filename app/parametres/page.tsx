@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { authFetch } from "../lib/api";
 import { appProduct, productConfig } from "../lib/product-config";
@@ -193,6 +194,21 @@ export default function ParametresPage() {
         <div className="bg-green-100 text-green-700 p-4 rounded-xl mb-6 font-bold">
           {message}
         </div>
+      )}
+
+      {isMaliLink && (
+        <Link
+          href="/parametres/profil-public"
+          className="mb-6 flex flex-col gap-1 rounded-2xl border border-gray-200 bg-white p-5 shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+        >
+          <span>
+            <span className="block text-lg font-bold text-black">Profil public MaliLink</span>
+            <span className="block text-sm text-gray-600">
+              Page publique et fiche dans l&apos;annuaire des entreprises. Rien n&apos;est publié sans votre accord.
+            </span>
+          </span>
+          <span className="font-bold text-black underline">Gérer →</span>
+        </Link>
       )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">

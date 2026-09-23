@@ -68,7 +68,9 @@ export default async function FicheProduit({ params }: Props) {
 
   const lieu = [produit.vendor.quartier, produit.vendor.city].filter(Boolean).join(", ");
   const disponible = produit.availability === "InStock";
-  const pageVendeur = produit.vendor.slug || produit.vendor.company_id;
+  /* Le backend ne renvoie le slug du vendeur que si son profil public est
+     publié : sans lui, pas de lien, sinon il mènerait à une page 404. */
+  const pageVendeur = produit.vendor.slug;
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 text-black md:p-8">
@@ -136,9 +138,13 @@ export default async function FicheProduit({ params }: Props) {
             {produit.vendor.name ? (
               <>
                 Publié par{" "}
-                <Link href={`/boutique/${pageVendeur}`} className="underline">
-                  {produit.vendor.name}
-                </Link>
+                {pageVendeur ? (
+                  <Link href={`/boutique/${pageVendeur}`} className="underline">
+                    {produit.vendor.name}
+                  </Link>
+                ) : (
+                  produit.vendor.name
+                )}
                 {lieu && <span className="font-normal text-gray-500"> — {lieu}</span>}
               </>
             ) : (

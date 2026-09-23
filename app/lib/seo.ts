@@ -270,25 +270,60 @@ export type EntreprisePublique = {
   country?: string; region?: string; city?: string; quartier?: string;
   address_line?: string; latitude?: number | null; longitude?: number | null;
   opening_hours?: unknown; url: string;
+  social_links?: Record<string, string | undefined>;
+  services?: Array<{ name: string; description?: string }>;
+  activity?: { key: string; label: string };
 };
 
+/* Type Schema.org selon l'activité réelle de l'entreprise. Un type plus
+   précis n'est employé que s'il décrit bien le métier ; sinon LocalBusiness. */
+const TYPES_LOCAUX: Record<string, string> = {
+  commerce: "Store",
+  b2b: "Store",
+  restaurant: "Restaurant",
+  ecole: "EducationalOrganization",
+  laboratoire: "MedicalBusiness",
+  sante: "MedicalBusiness",
+  immobilier: "RealEstateAgent",
+  automobile: "AutomotiveBusiness",
+};
+
+/* Schema.org n'accepte pour `openingHours` que la forme « Mo-Sa 08:00-19:00 ».
+   Un texte libre (« Lun–Sam 8h–19h ») s'affiche sur la page mais n'est pas
+   déclaré : une donnée structurée mal formée vaut moins que rien. */
+const HORAIRES_SCHEMA = /^(Mo|Tu|We|Th|Fr|Sa|Su)(-(Mo|Tu|We|Th|Fr|Sa|Su))?(,(Mo|Tu|We|Th|Fr|Sa|Su)(-(Mo|Tu|We|Th|Fr|Sa|Su))?)* \d{2}:\d{2}-\d{2}:\d{2}$/;
+
+function logoAbsolu(src?: string) {
+  if (!src) return undefined;
+  return src.startsWith("http") ? src : absoluteUrl(src);
+}
+
 /**
- * LocalBusiness dès qu'une localisation réelle existe, Organization sinon.
- * Annoncer un commerce local sans adresse serait une donnée fausse.
+ * Type local (Store, Restaurant…) dès qu'une localisation réelle existe,
+ * Organization sinon. Annoncer un commerce local sans adresse serait une
+ * donnée fausse.
  */
 export function entrepriseJsonLd(e: EntreprisePublique) {
   const localise = Boolean(e.city || e.address_line || (e.latitude && e.longitude));
+  const type = localise ? TYPES_LOCAUX[e.activity?.key || ""] || "LocalBusiness" : "Organization";
+  const reseaux = Object.values(e.social_links || {}).filter((x): x is string => Boolean(x));
+  const horaires = typeof e.opening_hours === "string" ? e.opening_hours.trim() : "";
   return nettoyerJsonLd({
     "@context": "https://schema.org",
-    "@type": localise ? "LocalBusiness" : "Organization",
+    "@type": type,
+    "@id": `${absoluteUrl(e.url)}#entreprise`,
     name: e.name,
     description: e.description || undefined,
     url: absoluteUrl(e.url),
-    logo: e.logo_url || undefined,
-    image: e.logo_url || undefined,
+    logo: logoAbsolu(e.logo_url),
+    image: logoAbsolu(e.logo_url),
     telephone: e.phone || undefined,
     email: e.email || undefined,
-    sameAs: e.website ? [e.website] : undefined,
+    sameAs: [e.website, ...reseaux].filter(Boolean),
+    makesOffer: (e.services || []).map((s) => ({
+      "@type": "Offer",
+      itemOffered: { "@type": "Service", name: s.name, description: s.description || undefined },
+    })),
     address: nettoyerJsonLd({
       "@type": "PostalAddress",
       streetAddress: [e.address_line, e.quartier].filter(Boolean).join(", ") || undefined,
@@ -299,6 +334,20 @@ export function entrepriseJsonLd(e: EntreprisePublique) {
     geo: e.latitude && e.longitude
       ? { "@type": "GeoCoordinates", latitude: e.latitude, longitude: e.longitude }
       : undefined,
-    openingHours: typeof e.opening_hours === "string" ? e.opening_hours : undefined,
+    openingHours: HORAIRES_SCHEMA.test(horaires) ? horaires : undefined,
+  });
+}
+
+/** Liste des fiches d'une page de l'annuaire : ItemList de liens. */
+export function annuaireJsonLd(fiches: Array<{ name: string; url: string }>, debut = 0) {
+  return nettoyerJsonLd({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: fiches.map((f, i) => ({
+      "@type": "ListItem",
+      position: debut + i + 1,
+      name: f.name,
+      url: absoluteUrl(f.url),
+    })),
   });
 }
