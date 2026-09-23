@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiUrl } from "../app/lib/api";
+import { productConfig } from "../app/lib/product-config";
 
 type Props = {
   mode?: "login" | "register";
@@ -41,7 +42,7 @@ export default function SocialAuthButtons({ mode = "login" }: Props) {
         Connexion sécurisée avec votre compte social.
       </p>
       <p className="mt-1 text-xs text-gray-600">
-        Triangle WMS Pro ne publiera jamais à votre place, ne lit pas vos messages
+        {productConfig.name} ne publiera jamais à votre place, ne lit pas vos messages
         privés et ne récupère jamais votre mot de passe social.
       </p>
 

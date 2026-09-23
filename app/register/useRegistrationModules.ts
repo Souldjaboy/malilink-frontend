@@ -26,7 +26,7 @@ type Payload = {
   catalog: CatalogEntry[];
   groups: Record<string, string>;
 };
-type PlanLike = { name?: string; max_modules_allowed?: number | string; excluded_modules?: string[] } | null;
+type PlanLike = { name?: string; display_name?: string; max_modules_allowed?: number | string; excluded_modules?: string[] } | null;
 
 export type ModuleCard = CatalogEntry & {
   selected: boolean;
@@ -71,20 +71,23 @@ export function useRegistrationModules(businessType: string, plan: PlanLike) {
 
   const ajouts = cards.filter((c) => c.selected && !c.inProfile);
 
+  // Nom commercial (Starter, Business…), pas l'identifiant interne (Essentiel…).
+  const nomOffre = plan?.display_name || plan?.name || "";
+
   /** Renvoie un message d'erreur si le choix est impossible, sinon null. */
   const toggle = useCallback(
     (key: string): string | null => {
       const carte = cards.find((c) => c.key === key);
       if (!carte) return null;
-      if (carte.excludedByPlan) return `« ${carte.label} » n'est pas inclus dans l'offre ${plan?.name || ""}.`;
+      if (carte.excludedByPlan) return `« ${carte.label} » n'est pas inclus dans l'offre ${nomOffre}.`;
       const activer = !carte.selected;
       if (activer && !carte.inProfile && !illimite && ajouts.length >= limite) {
-        return `L'offre ${plan?.name || ""} permet d'ajouter ${limite} module(s) au-delà de votre activité.`;
+        return `L'offre ${nomOffre} permet d'ajouter ${limite} module(s) au-delà de votre activité.`;
       }
       setEtat({ profil: profilCle, choix: { ...choix, [key]: activer } });
       return null;
     },
-    [cards, plan, illimite, ajouts.length, limite, profilCle, choix]
+    [cards, nomOffre, illimite, ajouts.length, limite, profilCle, choix]
   );
 
   /** Carte explicite clé → bool, envoyée telle quelle au backend. */
