@@ -1,0 +1,5 @@
+"use client";
+import Link from "next/link";
+import InstallPWAButton from "../../../components/InstallPWAButton";
+import { usePWAInstall } from "../../components/pwa/PWAInstallProvider";
+export default function Page(){const {installed,platform}=usePWAInstall();return <main className="min-h-screen bg-slate-100 p-4 sm:p-8"><div className="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow"><Link href="/parametres" className="font-bold text-slate-500">← Paramètres</Link><h1 className="mt-5 text-3xl font-black">Application MaliLink</h1><dl className="mt-6 grid gap-3 rounded-2xl bg-slate-50 p-5 sm:grid-cols-2"><div><dt className="text-sm text-slate-500">État</dt><dd className="font-black">{installed?"Installée":"Non installée"}</dd></div><div><dt className="text-sm text-slate-500">Appareil détecté</dt><dd className="font-black">{platform}</dd></div></dl><div className="mt-6"><InstallPWAButton/></div><p className="mt-5 text-sm leading-6 text-slate-600">L’installation n’enregistre pas vos données privées hors connexion et ne contourne jamais l’authentification.</p></div></main>}

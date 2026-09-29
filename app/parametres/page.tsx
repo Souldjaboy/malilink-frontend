@@ -197,9 +197,10 @@ export default function ParametresPage() {
       )}
 
       {isMaliLink && (
+        <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <Link
           href="/parametres/profil-public"
-          className="mb-6 flex flex-col gap-1 rounded-2xl border border-gray-200 bg-white p-5 shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+          className="flex flex-col gap-1 rounded-2xl border border-gray-200 bg-white p-5 shadow hover:shadow-md"
         >
           <span>
             <span className="block text-lg font-bold text-black">Profil public MaliLink</span>
@@ -209,6 +210,9 @@ export default function ParametresPage() {
           </span>
           <span className="font-bold text-black underline">Gérer →</span>
         </Link>
+        <Link href="/parametres/application" className="rounded-2xl border border-gray-200 bg-white p-5 shadow hover:shadow-md"><span className="block text-lg font-bold">Application</span><span className="text-sm text-gray-600">Installer MaliLink et vérifier l’état.</span></Link>
+        <Link href="/parametres/langue" className="rounded-2xl border border-gray-200 bg-white p-5 shadow hover:shadow-md"><span className="block text-lg font-bold">Langue et région</span><span className="text-sm text-gray-600">Français, English, العربية, 中文.</span></Link>
+        </div>
       )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
