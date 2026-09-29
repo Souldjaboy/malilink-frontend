@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ExternalLink, Eye, EyeOff, Globe, Info, MapPin, Phone, Plus, Trash2, Upload } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, Eye, EyeOff, Globe, Info, MapPin, Phone, Plus, SearchCheck, Trash2, Upload } from "lucide-react";
 import { authFetch } from "../../lib/api";
 import { usePermissions } from "../../lib/permissions";
 import { productConfig } from "../../lib/product-config";
@@ -189,6 +189,23 @@ export default function ProfilPublicPage() {
   }
 
   const lienPublic = profil.public_url;
+  const criteresSeo = [
+    { label: "Profil publié", ok: profil.is_public },
+    { label: "Présent dans l’annuaire MaliLink", ok: profil.listed_in_directory },
+    { label: "Description détaillée", ok: profil.description.trim().length >= 120 },
+    { label: "Logo ajouté", ok: Boolean(profil.logo_url) },
+    { label: "Ville et adresse renseignées", ok: Boolean(profil.city && profil.address_line) },
+    { label: "Téléphone public", ok: Boolean(profil.show_phone && profil.public_phone) },
+    { label: "Site ou réseau officiel", ok: Boolean(profil.website || Object.values(profil.social_links).some(Boolean)) },
+    { label: "Au moins un service", ok: profil.services.some((s) => s.name.trim()) },
+  ];
+  const scoreSeo = Math.round(criteresSeo.filter((c) => c.ok).length / criteresSeo.length * 100);
+
+  const copierLien = async () => {
+    if (!lienPublic) return;
+    await navigator.clipboard.writeText(new URL(lienPublic, productConfig.siteUrl).toString());
+    setMessage("Lien public copié.");
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 text-black md:p-8">
@@ -493,6 +510,22 @@ export default function ProfilPublicPage() {
                 tout moment en décochant « Publier ».
               </p>
             </fieldset>
+
+            <section className="rounded-2xl bg-white p-5 shadow md:p-6" aria-labelledby="visibilite-google">
+              <div className="flex items-start justify-between gap-3">
+                <div><h2 id="visibilite-google" className="text-xl font-black">Visibilité Google</h2><p className="mt-1 text-sm text-gray-600">Préparez une fiche complète et cohérente avant de demander son indexation.</p></div>
+                <span className={`rounded-full px-3 py-1 text-sm font-black ${scoreSeo >= 80 ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}>{scoreSeo}%</span>
+              </div>
+              <ul className="mt-4 space-y-2 text-sm">
+                {criteresSeo.map((c) => <li key={c.label} className="flex items-center gap-2"><CheckCircle2 size={16} className={c.ok ? "text-green-600" : "text-gray-300"}/><span className={c.ok ? "font-semibold" : "text-gray-500"}>{c.label}</span></li>)}
+              </ul>
+              <div className="mt-5 grid gap-2">
+                {lienPublic && <button type="button" onClick={()=>void copierLien()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 font-bold"><Copy size={16}/>Copier le lien de ma page</button>}
+                <a href="https://business.google.com/add" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3 font-bold text-white"><MapPin size={16}/>Créer ou revendiquer ma fiche Google</a>
+                {lienPublic && <a href={`https://search.google.com/test/rich-results?url=${encodeURIComponent(new URL(lienPublic, productConfig.siteUrl).toString())}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 font-bold"><SearchCheck size={16}/>Tester ma page Google</a>}
+              </div>
+              <p className="mt-3 text-xs leading-5 text-gray-500">Google décide seul du moment et de la position d’affichage. Une fiche Google Business vérifiée, des coordonnées cohérentes et une page MaliLink complète améliorent la compréhension de l’entreprise sans garantir un classement.</p>
+            </section>
 
             <section className="rounded-2xl bg-white p-5 shadow md:p-6" aria-label="Aperçu de la fiche annuaire">
               <h2 className="text-sm font-black uppercase tracking-wide text-gray-500">Aperçu de la fiche</h2>

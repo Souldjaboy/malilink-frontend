@@ -1,7 +1,7 @@
 import Link from "next/link";
 import PhotoPublique from "../../components/PhotoPublique";
 import { notFound } from "next/navigation";
-import { Clock, Globe, Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Globe, Mail, MapPin, MessageCircle, Navigation, Phone } from "lucide-react";
 import { entreprisePublique, LIBELLES_RESEAUX, type ReseauPublic } from "../../lib/public-api";
 import {
   entrepriseJsonLd, filAriane, metadataPage, seoActif,
@@ -62,6 +62,10 @@ export default async function Boutique({ params }: Props) {
   const horaires = typeof e.opening_hours === "string" ? e.opening_hours : "";
   const reseaux = (Object.entries(e.social_links || {}) as Array<[ReseauPublic, string]>).filter(([, lien]) => lien);
   const services = e.services || [];
+  const whatsapp = e.social_links?.whatsapp || "";
+  const carte = e.latitude && e.longitude
+    ? `https://www.google.com/maps/search/?api=1&query=${e.latitude},${e.longitude}`
+    : lieu ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${e.name}, ${lieu}`)}` : "";
 
   return (
     <div className="min-h-screen bg-gray-100 text-black">
@@ -190,6 +194,11 @@ export default async function Boutique({ params }: Props) {
               </div>
             )}
           </dl>
+          <div className="mt-5 grid gap-2">
+            {e.phone && <a href={`tel:${e.phone.replace(/\s+/g, "")}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--ml-gold,#d4a23c)] px-4 py-3 font-black text-[var(--ml-blue-deep,#0a1330)]"><Phone size={18}/>Appeler</a>}
+            {whatsapp && <a href={whatsapp} target="_blank" rel="nofollow noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 font-black text-white"><MessageCircle size={18}/>Écrire sur WhatsApp</a>}
+            {carte && <a href={carte} target="_blank" rel="nofollow noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 font-bold"><Navigation size={18}/>Voir l’itinéraire</a>}
+          </div>
           {!e.address_line && !e.phone && !e.email && !horaires && !e.website && (
             <p className="mt-3 text-sm text-gray-500">Aucune coordonnée publiée.</p>
           )}

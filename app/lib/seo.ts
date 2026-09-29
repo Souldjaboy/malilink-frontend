@@ -40,7 +40,7 @@ export const seoKeywords = [
 
 export const defaultSeoDescription =
   productConfig.product === "malilink"
-    ? "MaliLink Global est une marketplace multi-vendeurs et une plateforme SaaS pour entreprises africaines : commandes, vendeurs, paiements, services, restaurants, immobilier, automobile et laboratoire."
+    ? "MaliLink Global est la plateforme tout-en-un conçue pour les entreprises africaines : marketplace, gestion, pharmacie, éducation, comptabilité, services et visibilité en ligne."
     : productConfig.product === "hafiya"
       ? "HAFIYA Laboratoire est une plateforme médicale pour gérer analyses, rendez-vous, patients, résultats et documents de laboratoire."
       : "Triangle WMS Pro est une plateforme française pour gérer stocks, entrepôts, caisse POS, comptabilité, documents et opérations internes Triangle Logistics.";
@@ -283,10 +283,30 @@ const TYPES_LOCAUX: Record<string, string> = {
   restaurant: "Restaurant",
   ecole: "EducationalOrganization",
   laboratoire: "MedicalBusiness",
+  pharmacie: "Pharmacy",
   sante: "MedicalBusiness",
   immobilier: "RealEstateAgent",
   automobile: "AutomotiveBusiness",
 };
+
+/** Site MaliLink et recherche publique. Le moteur de recherche reste libre
+ * d'utiliser ou non cette information ; elle ne promet aucun classement. */
+export function siteWebJsonLd() {
+  return nettoyerJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${siteUrl}#site`,
+    name: productConfig.name,
+    alternateName: ["MaliLink", "MaliLink Global Afrique"],
+    url: siteUrl,
+    inLanguage: ["fr", "en", "ar", "zh-CN"],
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${absoluteUrl("/entreprises")}?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  });
+}
 
 /* Schema.org n'accepte pour `openingHours` que la forme « Mo-Sa 08:00-19:00 ».
    Un texte libre (« Lun–Sam 8h–19h ») s'affiche sur la page mais n'est pas

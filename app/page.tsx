@@ -6,6 +6,7 @@ import {
   Calculator,
   Car,
   FlaskConical,
+  Pill,
   GraduationCap,
   Handshake,
   HeartHandshake,
@@ -20,6 +21,8 @@ import {
   UserRound,
 } from "lucide-react";
 import { appProduct } from "./lib/product-config";
+import JsonLd from "./components/JsonLd";
+import { organisationJsonLd, seoActif, siteWebJsonLd } from "./lib/seo";
 
 const ROLE_CARDS = [
   {
@@ -87,6 +90,7 @@ const MODULES = [
   { icon: Store, label: "POS / Caisse" },
   { icon: Package, label: "Stocks & produits" },
   { icon: FlaskConical, label: "Laboratoire" },
+  { icon: Pill, label: "Pharmacie" },
   { icon: Building2, label: "Immobilier / Hôtel" },
   { icon: Car, label: "Automobile" },
   { icon: Calculator, label: "Comptabilité" },
@@ -97,6 +101,7 @@ const MODULES = [
 function MaliLinkLanding() {
   return (
     <main className="min-h-screen bg-[var(--ml-blue,#0f1b3d)] text-white">
+      {seoActif && <><JsonLd data={organisationJsonLd()} /><JsonLd data={siteWebJsonLd()} /></>}
       {/* Header */}
       <header className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 md:px-6">
         <div className="flex items-center gap-3">
@@ -120,16 +125,16 @@ function MaliLinkLanding() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-4 pb-12 pt-8 text-center md:px-6 md:pt-16">
         <p className="mx-auto inline-block rounded-full border border-[var(--ml-gold,#d4a23c)]/50 px-4 py-1.5 text-sm font-semibold text-[var(--ml-gold-light,#e8c464)]">
-          La super-plateforme africaine
+          L’ambition de devenir la plateforme numérique n°1 en Afrique
         </p>
         <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-black leading-tight text-white md:text-6xl">
           Vendez, achetez, livrez et gérez votre activité.{" "}
           <span className="text-[var(--ml-gold,#d4a23c)]">Au même endroit.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-lg text-white/80">
-          MaliLink connecte les entreprises, les clients et les livreurs du Mali et d’Afrique.
-          Marketplace, livraison, école, restaurant, comptabilité et assistant IA — dans un seul
-          outil, en français.
+          MaliLink connecte les entreprises, les clients et les professionnels du Mali et d’Afrique.
+          Marketplace, pharmacie, école, gestion, comptabilité et assistant IA — dans un seul
+          outil, disponible en français, anglais, arabe et chinois.
         </p>
         <div className="mx-auto mt-8 flex max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
           <Link

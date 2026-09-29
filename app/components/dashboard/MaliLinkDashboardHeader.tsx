@@ -5,6 +5,7 @@ import { Bell, Search, Wallet } from "lucide-react";
 import InstallPWAButton from "../../../components/InstallPWAButton";
 import { CompanyLogo } from "./DashboardCompanyIdentity";
 import type { CompanyIdentity, ModuleEnabledFn } from "./dashboardTypes";
+import LanguageSwitcher from "../../i18n/LanguageSwitcher";
 
 function statusTone(status: string): string {
   const s = status.toLowerCase();
@@ -60,6 +61,7 @@ export default function MaliLinkDashboardHeader({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <LanguageSwitcher compact />
           <IconAction href="/recherche" label="Recherche" icon={Search} />
           {moduleEnabled("notifications") && (
             <IconAction href="/notifications" label="Notifications" icon={Bell} />

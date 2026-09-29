@@ -43,7 +43,7 @@ export default function robots(): MetadataRoute.Robots {
           "/pos", "/badges", "/pointage", "/attendance-scan", "/scanner",
           "/notifications", "/alertes", "/activites", "/vendor", "/livreur",
           "/wallet", "/finance", "/import", "/chat", "/assistant", "/social",
-          "/cameras", "/marketing",
+          "/cameras", "/marketing", "/pharmacie", "/reseau",
           /* `/partenaires` est la fiche CRM d'un partenaire commercial —
              ventes, encaissements, impayés — et non une vitrine. La vitrine
              publique d'un vendeur, elle, est `/boutique/<slug>`. */
