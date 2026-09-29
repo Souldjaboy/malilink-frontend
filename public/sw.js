@@ -1,4 +1,4 @@
-const CACHE_NAME = "multi-tenant-app-v3";
+const CACHE_NAME = "malilink-public-shell-v4";
 const APP_SHELL = [
   "/manifest.webmanifest",
   "/brands/triangle-logo.svg",
@@ -19,6 +19,11 @@ const PRIVATE_PATH_PREFIXES = [
   "/badges",
   "/utilisateurs",
   "/notifications",
+  "/pharmacie",
+  "/cameras",
+  "/reseau",
+  "/social",
+  "/marketing",
   "/marketplace/cart",
   "/marketplace/checkout",
   "/marketplace/orders",
@@ -102,22 +107,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(request).then((response) => {
-        if (
-          response.ok &&
-          response.type === "basic" &&
-          ["style", "script", "image", "font"].includes(request.destination)
-        ) {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-        }
-
-        return response;
-      });
-    })
-  );
+  if (["style", "script", "image", "font"].includes(request.destination)) {
+    event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
+  }
 });

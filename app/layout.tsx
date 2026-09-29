@@ -4,6 +4,10 @@ import { appProduct, productConfig } from "./lib/product-config";
 import { defaultSeoDescription, seoActif, siteUrl } from "./lib/seo";
 import MaliLinkHomeButton from "./components/MaliLinkHomeButton";
 import ModuleRouteGuard from "./components/ModuleRouteGuard";
+import PWARegister from "../components/PWARegister";
+import { PWAInstallProvider, PWAInstructions } from "./components/pwa/PWAInstallProvider";
+import { LocaleProvider } from "./i18n/LocaleProvider";
+import PublicUtilityBar from "./components/PublicUtilityBar";
 
 /* Metadata commune à toutes les pages, appliquée uniquement à MaliLink.
    Triangle et Hafiya ne sont pas indexables : leur bloc reste identique au
@@ -61,11 +65,18 @@ export default function RootLayout({
   return (
     // data-product active le design system produit de globals.css
     // (html[data-product="..."]) — chaque build ne connaît que son produit.
-    <html lang="fr" data-product={appProduct}>
+    <html lang="fr" dir="ltr" data-product={appProduct} suppressHydrationWarning>
       <body>
-        {children}
-        <MaliLinkHomeButton />
-        <ModuleRouteGuard />
+        <LocaleProvider>
+          <PWAInstallProvider>
+            {children}
+            {appProduct === "malilink" && <PublicUtilityBar />}
+            <MaliLinkHomeButton />
+            <ModuleRouteGuard />
+            <PWARegister />
+            <PWAInstructions />
+          </PWAInstallProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

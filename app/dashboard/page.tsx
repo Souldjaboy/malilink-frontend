@@ -72,6 +72,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import PWAInstallCard from "../components/pwa/PWAInstallCard";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -341,6 +342,7 @@ export default function DashboardPage() {
         onLogout={handleLogout}
       >
         <TrialBanner user={userData} />
+        <PWAInstallCard />
 
         {accessMessage && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 font-semibold text-red-700">

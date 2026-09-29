@@ -37,6 +37,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html[dir="rtl"] body { direction: rtl; }
+html[dir="rtl"] input, html[dir="rtl"] textarea, html[dir="rtl"] select { text-align: right; }
+
 /* ============================================================
    MALILINK GLOBAL — IDENTITÉ PREMIUM
    Bleu nuit profond + or raffiné. Scopé au produit malilink :

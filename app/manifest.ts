@@ -7,9 +7,13 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "La super-plateforme africaine : marketplace, livraison, école, restaurant, gestion et assistant IA.",
     start_url: "/",
+    scope: "/",
+    id: "/",
     display: "standalone",
+    orientation: "any",
     background_color: "#0f1b3d",
     theme_color: "#0f1b3d",
+    categories: ["business", "productivity", "finance"],
     icons: [
       {
         src: "/icons/malilink/icon-192.png",
