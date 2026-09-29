@@ -112,6 +112,8 @@ export default function LoginPage() {
         router.push("/livreur");
       } else if (role === "customer") {
         router.push("/client/dashboard");
+      } else if (String(data.user?.business_type || "").toLowerCase() === "pharmacie") {
+        router.push("/pharmacie");
       } else {
         router.push("/dashboard");
       }

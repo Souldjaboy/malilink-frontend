@@ -50,6 +50,7 @@ const TYPES_ACTIVITE = [
   ["restaurant", "Restaurant"],
   ["ecole", "École / Éducation"],
   ["laboratoire", "Laboratoire"],
+  ["pharmacie", "Pharmacie"],
   ["immobilier", "Immobilier / Hôtel"],
   ["automobile", "Automobile / Garage"],
   ["logistique", "Livraison / Transport"],

@@ -37,7 +37,9 @@ export type ProductModule =
   | "voyage"
   | "wallet"
   | "cameras"
-  | "marketing";
+  | "marketing"
+  | "pharmacie"
+  | "reseau";
 
 type ProductTheme = {
   primary: string;
@@ -115,6 +117,8 @@ const baseModules: Record<ProductModule, boolean> = {
   // Modules génériques : ouverts produit par produit, jamais par défaut.
   cameras: false,
   marketing: false,
+  pharmacie: false,
+  reseau: false,
 };
 
 const configs: Record<AppProduct, ProductConfig> = {
@@ -228,6 +232,8 @@ const configs: Record<AppProduct, ProductConfig> = {
       wallet: true,
       cameras: true,
       marketing: true,
+      pharmacie: true,
+      reseau: true,
     },
     disabledRoutePrefixes: [],
     allowedRoutePrefixes: [],

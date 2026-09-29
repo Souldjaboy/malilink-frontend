@@ -46,6 +46,8 @@ import {
   Users2,
   Video,
   Megaphone,
+  Pill,
+  Network,
 } from "lucide-react";
 import { isProductModuleEnabled, type ProductModule } from "../../lib/product-config";
 import type { DashboardGroup, ModuleEnabledFn, PermissionFlags } from "./dashboardTypes";
@@ -85,6 +87,10 @@ export const productModuleByDashboardKey: Record<string, ProductModule> = {
   social: "social",
   voyage: "voyage",
   wallet: "wallet",
+  cameras: "cameras",
+  marketing: "marketing",
+  pharmacie: "pharmacie",
+  reseau: "reseau",
 };
 
 /**
@@ -106,6 +112,8 @@ const MODULE_ALIASES: Record<string, string> = {
   "attendance-scan": "pointage",
   livreur: "livraison",
   restaurants: "restaurant",
+  pharmacy: "pharmacie",
+  network: "reseau",
   alerte: "alertes",
 };
 
@@ -161,6 +169,27 @@ export const SIDEBAR_GROUPS: DashboardGroup[] = [
       { href: "/inventaires", label: "Inventaires", icon: ClipboardList, module: "inventaire" },
       { href: "/scanner", label: "Scanner QR", icon: ScanLine, module: "stock" },
       { href: "/partenaires", label: "Partenaires", icon: Handshake, moduleAny: ["crm", "partenaires"], requires: ["canManageWarehouse"] },
+    ],
+  },
+  {
+    key: "pharmacie",
+    title: "Pharmacie",
+    items: [
+      { href: "/pharmacie", label: "Pharmacie", icon: Pill, module: "pharmacie" },
+      { href: "/pharmacie/medicaments", label: "Médicaments", icon: Package, module: "pharmacie" },
+      { href: "/pharmacie/lots", label: "Lots & péremptions", icon: Boxes, module: "pharmacie" },
+      { href: "/pharmacie/patients", label: "Patients", icon: Users, module: "pharmacie" },
+      { href: "/pharmacie/ordonnances", label: "Ordonnances", icon: ClipboardPen, module: "pharmacie" },
+      { href: "/pharmacie/pos", label: "POS Pharmacie", icon: CreditCard, module: "pharmacie" },
+    ],
+  },
+  {
+    key: "infrastructure",
+    title: "Sécurité / Infrastructure",
+    items: [
+      { href: "/cameras", label: "Caméras & Sécurité", icon: Video, module: "cameras" },
+      { href: "/reseau", label: "Réseau & Infrastructure", icon: Network, module: "reseau" },
+      { href: "/marketing", label: "Gestion des réseaux sociaux", icon: Megaphone, module: "marketing" },
     ],
   },
   {
@@ -301,6 +330,21 @@ export const SIDEBAR_GROUPS: DashboardGroup[] = [
  * filtrage ; chaque carte a une description courte.
  */
 export const DASHBOARD_SECTIONS: DashboardGroup[] = [
+  {
+    key: "pharmacie",
+    title: "Pharmacie",
+    items: [
+      { href: "/pharmacie", label: "Pharmacie", description: "Médicaments, lots FEFO, patients, ordonnances et ventes.", icon: Pill, module: "pharmacie" },
+    ],
+  },
+  {
+    key: "infrastructure",
+    title: "Sécurité / Infrastructure",
+    items: [
+      { href: "/cameras", label: "Caméras & Sécurité", description: "Sites, caméras et enregistreurs avec secrets protégés.", icon: Video, module: "cameras" },
+      { href: "/reseau", label: "Réseau & Infrastructure", description: "Équipements, IP/MAC, incidents et maintenance.", icon: Network, module: "reseau" },
+    ],
+  },
   {
     key: "commerce",
     title: "Commerce / Marché",
@@ -493,7 +537,8 @@ export function filterGroups(
 const BUSINESS_PRIORITIES: Array<{ match: string[]; order: string[] }> = [
   { match: ["ecole", "education", "universite", "institut", "formation"], order: ["education", "communication", "finance"] },
   { match: ["restaurant", "restauration", "cafe", "maquis"], order: ["restaurant", "commerce", "livraison"] },
-  { match: ["laboratoire", "labo", "sante", "clinique", "pharmacie"], order: ["laboratoire", "communication", "finance"] },
+  { match: ["pharmacie", "officine", "pharmacy"], order: ["pharmacie", "commerce", "finance"] },
+  { match: ["laboratoire", "labo", "sante", "clinique"], order: ["laboratoire", "communication", "finance"] },
   { match: ["automobile", "auto", "garage", "vehicule", "voiture"], order: ["automobile", "commerce", "finance"] },
   { match: ["immobilier", "hotel", "residence"], order: ["immobilier", "commerce", "finance"] },
   { match: ["logistique", "transport", "livraison", "coursier"], order: ["livraison", "voyage", "commerce"] },
