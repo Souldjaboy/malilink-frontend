@@ -60,6 +60,16 @@ export async function authFetch(path: string, options: RequestInit = {}) {
     headers: authHeaders(options.headers || {}),
   });
 
+  /* Abonnement verrouillé : direction l'écran d'abonnement (paiement,
+     factures, support), sans déconnecter. */
+  if (typeof window !== "undefined" && response.status === 402) {
+    const payload = await response.clone().json().catch(() => ({}));
+    if (payload?.code === "ABONNEMENT_VERROUILLE" && !window.location.pathname.startsWith("/abonnement-expire")) {
+      document.cookie = `triangle_subscription_status=${payload.statut === "suspendu" ? "suspended" : "expired"}; path=/; max-age=86400; SameSite=Lax`;
+      window.location.href = "/abonnement-expire";
+    }
+  }
+
   if (
     typeof window !== "undefined" &&
     (response.status === 401 || response.status === 403)

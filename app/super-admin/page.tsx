@@ -607,6 +607,9 @@ export default function SuperAdminPage() {
           <h1 className="text-4xl font-bold text-black">
             Super Admin SaaS
           </h1>
+          <a href="/super-admin/facturation" className="mt-2 inline-block rounded-xl bg-[var(--ml-blue-deep,#0a1330)] px-4 py-2 font-bold text-white">
+            Facturation de la plateforme
+          </a>
 
           <p className="text-gray-500">
             Gestion complète {productConfig.name}
@@ -757,6 +760,13 @@ export default function SuperAdminPage() {
                   >
                     Réactiver
                   </button>
+
+                  <a
+                    href={`/super-admin/entreprises/${company.id}/facturation`}
+                    className="bg-[var(--ml-blue-deep,#0a1330)] text-white px-3 py-2 rounded-xl font-bold"
+                  >
+                    Facturation
+                  </a>
 
                   <button
                     onClick={() =>

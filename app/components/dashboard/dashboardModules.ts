@@ -489,6 +489,7 @@ export const DASHBOARD_SECTIONS: DashboardGroup[] = [
       { href: "/alertes", label: "Alertes", description: "Alertes stock et opérations.", icon: TriangleAlert, module: "alertes", requiresAny: ["canManageWarehouse", "isReadOnlyRole"] },
       { href: "/support", label: "Support", description: "Aide et assistance MaliLink.", icon: LifeBuoy, alwaysShow: true },
       { href: "/parametres/securite/biometrie", label: "Biométrie", description: "Visage, empreinte, appareils, consentements et journal.", icon: Fingerprint, module: "biometrie", requires: ["isAdminLike"] },
+      { href: "/parametres/abonnement", label: "Abonnement & factures", description: "Offre, échéance, factures et paiement.", icon: CreditCard, requires: ["isAdminLike"] },
       { href: "/profil/securite", label: "Sécurité du compte", description: "Passkeys (Face ID, Touch ID, Windows Hello) et biométrie.", icon: KeyRound, alwaysShow: true },
       { href: "/parametres", label: "Paramètres", description: "Réglages de l'entreprise.", icon: Settings, requires: ["isAdminLike"] },
       { href: "/super-admin", label: "Super Admin", description: "Administration de la plateforme.", icon: ShieldCheck, requires: ["isSuperAdmin"] },

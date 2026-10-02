@@ -1,7 +1,18 @@
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
-import { productConfig } from "../lib/product-config";
+import AbonnementClient from "../components/abonnement/AbonnementClient";
+import { appProduct, productConfig } from "../lib/product-config";
 
+/* MaliLink : écran de verrouillage complet (offre, montant dû, paiement,
+   factures, support, déconnexion). Les autres produits gardent l'écran
+   d'origine : leur backend n'a pas la facturation de la plateforme. */
 export default function AbonnementExpirePage() {
+  if (appProduct === "malilink") {
+    return (
+      <main className="min-h-screen bg-gray-100 p-4 md:p-8">
+        <AbonnementClient modeVerrou />
+      </main>
+    );
+  }
   return (
     <main className="min-h-screen bg-gray-100 p-4 text-black md:p-8">
       <div className="mx-auto flex min-h-[80vh] max-w-3xl items-center justify-center">
