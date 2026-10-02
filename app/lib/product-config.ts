@@ -39,7 +39,8 @@ export type ProductModule =
   | "cameras"
   | "marketing"
   | "pharmacie"
-  | "reseau";
+  | "reseau"
+  | "biometrie";
 
 type ProductTheme = {
   primary: string;
@@ -119,6 +120,8 @@ const baseModules: Record<ProductModule, boolean> = {
   marketing: false,
   pharmacie: false,
   reseau: false,
+  // Données sensibles : ouvert par produit, puis par société (fermé par défaut).
+  biometrie: false,
 };
 
 const configs: Record<AppProduct, ProductConfig> = {
@@ -234,6 +237,7 @@ const configs: Record<AppProduct, ProductConfig> = {
       marketing: true,
       pharmacie: true,
       reseau: true,
+      biometrie: true,
     },
     disabledRoutePrefixes: [],
     allowedRoutePrefixes: [],
@@ -387,6 +391,7 @@ const routeModuleRules: Array<{ prefixes: string[]; module: ProductModule }> = [
   { prefixes: ["/travel"], module: "voyage" },
   { prefixes: ["/wallet"], module: "wallet" },
   { prefixes: ["/cameras"], module: "cameras" },
+  { prefixes: ["/parametres/securite/biometrie"], module: "biometrie" },
   { prefixes: ["/marketing"], module: "marketing" },
 ];
 

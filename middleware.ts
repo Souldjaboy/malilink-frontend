@@ -41,6 +41,7 @@ const protectedRoutes = [
   "/marketing",
   "/pharmacie",
   "/reseau",
+  "/profil",
 ];
 
 // Pages publiques placées sous un préfixe protégé (menu QR d'un restaurant).
@@ -100,6 +101,7 @@ const moduleRouteMap: Record<string, string> = {
   "/livreur": "livraison",
   "/cameras": "cameras",
   "/marketing": "marketing",
+  "/parametres/securite/biometrie": "biometrie",
   "/pharmacie": "pharmacie",
   "/reseau": "reseau",
 };
@@ -335,6 +337,7 @@ export const config = {
     "/livreur/:path*",
     "/cameras/:path*",
     "/marketing/:path*",
+    "/profil/:path*",
     "/solutions/:path*",
     "/services/:path*",
     "/a-propos/:path*",

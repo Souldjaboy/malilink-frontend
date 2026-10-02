@@ -4,6 +4,8 @@ import { Html5Qrcode } from "html5-qrcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatFCFA } from "../lib/format";
 import { authHeaders } from "../lib/api";
+import { api as apiBio, appareilLocal } from "../lib/biometrie";
+import PointageVisage from "./PointageVisage";
 
 const API_URL = "/api";
 
@@ -35,6 +37,12 @@ export default function PointageQRCodePage() {
   const startingRef = useRef(false);
   const lastScanRef = useRef<{ key: string; time: number }>({ key: "", time: 0 });
   const gpsSettingsRef = useRef<any>({ gps_required: false });
+  /* Badge + visage : disponible si l'entreprise a activé le visage et que ce
+     navigateur est un appareil déclaré (kiosque). Sinon, badge seul. */
+  const [visagePossible, setVisagePossible] = useState(false);
+  const [modeVisage, setModeVisage] = useState(false);
+  const modeVisageRef = useRef(false);
+  const [badgeVisage, setBadgeVisage] = useState<string | null>(null);
 
   /* Jeton de la session ET société active : le scan exige désormais un
      opérateur ou un kiosque authentifié. */
@@ -115,6 +123,11 @@ export default function PointageQRCodePage() {
   };
 
   const sendScan = useCallback(async (decodedText: string) => {
+    if (modeVisageRef.current) {
+      // Le badge désigne la personne ; le visage la confirmera.
+      setBadgeVisage(decodedText.trim());
+      return;
+    }
     const badgeCode = extractBadgeCode(decodedText);
     const selectedAction = actionRef.current;
     const scanKey = `${selectedAction}:${badgeCode}`;
@@ -320,6 +333,23 @@ export default function PointageQRCodePage() {
   }, [actionType]);
 
   useEffect(() => {
+    modeVisageRef.current = modeVisage;
+  }, [modeVisage]);
+
+  useEffect(() => {
+    let actif = true;
+    if (!appareilLocal()) return;
+    apiBio("/biometrics/config").then((r) => {
+      if (actif && r.ok && r.data?.modalites?.face) setVisagePossible(true);
+    }).catch(() => {});
+    return () => { actif = false; };
+  }, []);
+
+  useEffect(() => {
+    if (badgeVisage) stopScanner();
+  }, [badgeVisage, stopScanner]);
+
+  useEffect(() => {
     fetchAttendance();
     fetchGpsSettings();
 
@@ -369,6 +399,20 @@ export default function PointageQRCodePage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8 text-black">
+      {badgeVisage && (
+        <PointageVisage
+          badge={badgeVisage}
+          action={actionType}
+          libelleAction={ACTION_LABEL[actionType]}
+          onTermine={async (r) => {
+            setBadgeVisage(null);
+            setMessageType(r.ok ? "success" : "error");
+            setMessage(r.message);
+            await fetchAttendance();
+            await startScanner();
+          }}
+        />
+      )}
       <div className="mb-8">
         <h1 className="text-4xl font-bold">Pointage QR</h1>
         <p className="text-gray-500">
@@ -411,6 +455,13 @@ export default function PointageQRCodePage() {
           <option value="pause_end">Fin pause</option>
           <option value="checkout">Fin travail</option>
         </select>
+
+        {visagePossible && (
+          <label className="mb-4 flex items-center gap-3 rounded-xl border p-4 font-bold">
+            <input type="checkbox" checked={modeVisage} onChange={(e) => setModeVisage(e.target.checked)} className="h-5 w-5" />
+            Badge + visage (confirmation 1:1 recommandée)
+          </label>
+        )}
 
         <div className="mb-3 text-sm font-bold text-gray-600">
           Action sélectionnée : {ACTION_LABEL[actionType]} | Caméra :{" "}

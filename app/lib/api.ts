@@ -66,11 +66,13 @@ export async function authFetch(path: string, options: RequestInit = {}) {
   ) {
     const payload = await response.clone().json().catch(() => ({}));
     const message = String(payload?.error || "").toLowerCase();
-    /* Un module fermé ou un droit refusé n'est PAS une session invalide :
-       l'utilisateur doit rester connecté et simplement voir le refus. */
-    const refusDeModule = ["MODULE_DISABLED", "PERMISSION_DENIED", "SUBMODULE_DISABLED"].includes(
-      String(payload?.code || "")
-    );
+    /* Un module fermé, un droit refusé, un visage non reconnu, une passkey
+       refusée ou une validation renforcée demandée ne sont PAS une session
+       invalide : l'utilisateur reste connecté et voit simplement le refus.
+       Les vraies fins de session (jeton absent, expiré, autre version) ne
+       portent jamais de champ `code` ; toute réponse codée est un refus métier. */
+    const code = String(payload?.code || "");
+    const refusDeModule = code !== "" && !/TOKEN|SESSION/i.test(code);
 
     if (
       !refusDeModule &&
