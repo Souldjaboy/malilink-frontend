@@ -3,6 +3,7 @@
 import { Html5Qrcode } from "html5-qrcode";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatFCFA } from "../lib/format";
+import { authHeaders } from "../lib/api";
 
 const API_URL = "/api";
 
@@ -35,10 +36,12 @@ export default function PointageQRCodePage() {
   const lastScanRef = useRef<{ key: string; time: number }>({ key: "", time: 0 });
   const gpsSettingsRef = useRef<any>({ gps_required: false });
 
-  const getHeaders = () => ({
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-  });
+  /* Jeton de la session ET société active : le scan exige désormais un
+     opérateur ou un kiosque authentifié. */
+  const getHeaders = () => {
+    const h = authHeaders({ "Content-Type": "application/json" });
+    return Object.fromEntries(h.entries());
+  };
 
   const fetchAttendance = useCallback(async () => {
     try {
@@ -227,9 +230,9 @@ export default function PointageQRCodePage() {
 
       setMessageType("success");
       setMessage(
-        `${data.user?.fullname || "Employé"} - ${
+        `${data.employee?.fullname || data.user?.fullname || "Employé"} - ${
           data.action || ACTION_LABEL[selectedAction]
-        } enregistré`
+        } ${data.statut === "deja_enregistre" ? "déjà enregistré" : "enregistré"}`
       );
 
       if (data.gps) {
