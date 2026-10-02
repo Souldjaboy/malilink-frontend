@@ -131,7 +131,23 @@ export const champsAppareil = () => {
 
 export async function ouvrirCamera(video: HTMLVideoElement, face: "user" | "environment" = "user") {
   if (!navigator.mediaDevices?.getUserMedia) throw new Error("Caméra indisponible sur cet appareil.");
-  const flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: face, width: { ideal: 640 } }, audio: false });
+  let flux: MediaStream;
+  try {
+    flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: face, width: { ideal: 640 } }, audio: false });
+  } catch (e) {
+    const nom = e instanceof Error ? e.name : "";
+    /* Le navigateur répond en anglais (« Permission denied ») : on dit quoi
+       faire, en français. Le badge seul et le pointage manuel restent possibles. */
+    throw new Error(
+      nom === "NotAllowedError" || nom === "SecurityError"
+        ? "Accès à la caméra refusé : autorisez-le dans les réglages du navigateur, ou utilisez le badge seul."
+        : nom === "NotFoundError" || nom === "OverconstrainedError"
+          ? "Aucune caméra disponible sur cet appareil."
+          : nom === "NotReadableError"
+            ? "La caméra est déjà utilisée par une autre application."
+            : "La caméra n'a pas pu démarrer."
+    );
+  }
   video.srcObject = flux;
   await video.play();
   return flux;

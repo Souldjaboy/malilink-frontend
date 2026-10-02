@@ -71,7 +71,7 @@ export default function PointageVisage({ badge, action, libelleAction, onTermine
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Vérification du visage">
+    <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Vérification du visage">
       <div className="w-full max-w-md rounded-2xl bg-white p-5 text-black">
         <h2 className="text-xl font-black">Confirmez votre visage</h2>
         <p className="mt-1 text-sm text-gray-600">Badge lu. Regardez la caméra, puis appuyez sur « Vérifier ». Aucune photo n&apos;est conservée.</p>

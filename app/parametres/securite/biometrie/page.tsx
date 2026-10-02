@@ -513,7 +513,7 @@ function Enrolement({ personne, type, config, appareils, onFermer, onTermine }: 
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center" role="dialog" aria-modal="true" aria-label="Enrôlement">
+    <div className="fixed inset-0 z-[9000] flex items-end justify-center bg-black/50 p-4 sm:items-center" role="dialog" aria-modal="true" aria-label="Enrôlement">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 text-black">
         <h2 className="text-xl font-black">{type === "face" ? "Enregistrer le visage" : "Enregistrer une empreinte"} — {personne.nom}</h2>
         {erreur && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-800">{erreur}</p>}
