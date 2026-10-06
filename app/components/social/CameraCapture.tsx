@@ -10,12 +10,14 @@ import { duree, formatEnregistrement, messageCamera } from "../../lib/social";
  * envoyé ici : le résultat est rendu au composeur, qui l'affiche en aperçu.
  */
 export default function CameraCapture({
-  mode: modeInitial, dureeMax, onResult, onClose,
+  mode: modeInitial, dureeMax, onResult, onClose, photoSeulement = false,
 }: {
   mode: "photo" | "video";
   dureeMax: number;
   onResult: (fichier: File) => void;
   onClose: () => void;
+  /** Photo d'identité (élève…) : pas de bascule vers la vidéo. */
+  photoSeulement?: boolean;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const flux = useRef<MediaStream | null>(null);
@@ -120,7 +122,7 @@ export default function CameraCapture({
         <button type="button" onClick={fermer} className="rounded-full bg-white/10 p-2" aria-label="Fermer la caméra">
           <X size={22} />
         </button>
-        {!enCours && (
+        {!enCours && !photoSeulement && (
           <div className="flex rounded-full bg-white/10 p-1 text-sm font-bold">
             <button type="button" onClick={() => setMode("photo")} aria-pressed={mode === "photo"}
               className={`flex items-center gap-1 rounded-full px-3 py-1.5 ${mode === "photo" ? "bg-yellow-500 text-black" : ""}`}>
