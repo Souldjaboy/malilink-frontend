@@ -220,18 +220,19 @@ function MessagesInner() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-20 md:pb-8">
+    <div className="min-h-screen bg-gray-100 pb-20 lg:pb-8">
       <SocialNav />
-      <main className="mx-auto max-w-3xl px-0 py-0 md:px-3 md:py-4">
-        <div className="flex h-[calc(100dvh-115px)] overflow-hidden bg-white md:h-[calc(100dvh-140px)] md:rounded-2xl md:shadow">
+      <main className="mx-auto max-w-3xl px-0 py-0 lg:px-3 lg:py-4">
+        <div className="flex h-[calc(100dvh-125px)] overflow-hidden bg-white lg:h-[calc(100dvh-140px)] lg:rounded-2xl lg:shadow">
           {/* Liste des conversations */}
           <section
             className={`${active ? "hidden md:flex" : "flex"} w-full flex-col border-r border-gray-100 md:w-2/5`}
           >
             <div className="flex items-center justify-between border-b border-gray-100 p-3.5">
               <h1 className="text-lg font-black text-black">Messages</h1>
-              <Link href="/social/amis" aria-label="Mes amis" className="rounded-xl bg-gray-100 p-2 text-gray-600">
-                <Users size={18} />
+              {/* Nouveau message : on choisit parmi ses amis, dans Réseau. */}
+              <Link href="/social/reseau?onglet=amis" className="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-xs font-black text-gray-700">
+                <Users size={16} aria-hidden="true" /> Nouveau message
               </Link>
             </div>
             <div className="flex-1 overflow-y-auto">

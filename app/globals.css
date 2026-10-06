@@ -210,8 +210,10 @@ html[data-product="malilink"] aside button.bg-yellow-400 * {
   color: var(--ml-blue-deep);
 }
 
-/* --- Badge actif hors sidebar --- */
-html[data-product="malilink"] [aria-current="page"],
+/* --- Badge actif hors sidebar ---
+   Les barres de navigation sombres (MaliLink Social) gèrent elles-mêmes la
+   couleur de l'onglet actif : bleu nuit sur bleu nuit serait invisible. */
+html[data-product="malilink"] [aria-current="page"]:not([data-nav-sombre]),
 html[data-product="malilink"] .active {
   color: var(--ml-blue-deep);
 }

@@ -145,7 +145,7 @@ export default function SocialProfileSetupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-24 md:pb-8">
+    <div className="min-h-screen bg-gray-100 pb-24 lg:pb-8">
       <SocialNav />
       <main className="mx-auto max-w-xl px-3 py-5">
         <h1 className="text-2xl font-black text-black">Mon profil social</h1>

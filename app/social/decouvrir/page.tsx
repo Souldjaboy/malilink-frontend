@@ -105,7 +105,7 @@ export default function SocialDiscoverPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-24 md:pb-8">
+    <div className="min-h-screen bg-gray-100 pb-24 lg:pb-8">
       <SocialNav />
       <main className="mx-auto max-w-xl px-3 py-4">
         <div className="flex gap-2 overflow-x-auto pb-1">
