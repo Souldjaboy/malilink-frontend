@@ -7,6 +7,7 @@ import { Compass, Home, MessageCircle, PlusSquare, ShoppingBag, UserCircle2, Use
 import { appProduct } from "../lib/product-config";
 import { authFetch, getAuthToken } from "../lib/api";
 import type { NetworkSummary } from "../lib/social";
+import GestionAppels from "./social/GestionAppels";
 
 type Onglet = {
   href: string;
@@ -75,6 +76,8 @@ export default function SocialNav() {
 
   return (
     <>
+      {/* Appels audio/vidéo : n'apparaît que si le serveur les annonce en service. */}
+      <GestionAppels />
       <header className="sticky top-0 z-40 flex items-center justify-between gap-2 bg-[var(--ml-navy,#0f1b3d)] px-3 py-2 md:px-4">
         <Link href="/social" className="flex min-w-0 items-center gap-2.5">
           <img src="/brands/malilink-logo-officiel.jpg" alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />

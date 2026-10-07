@@ -3,10 +3,64 @@
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Send, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, Image as ImageIcon, Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Send, Trash2, Users, Video } from "lucide-react";
 import { authFetch } from "../../lib/api";
 import { getSocket } from "../../lib/socket";
 import SocialNav from "../../components/SocialNav";
+import { dureeAppel, lancerAppel, LIBELLES_STATUT, useConfigAppels, type Appel } from "../../lib/appels";
+
+/* Heure du dernier message : « 14:05 » aujourd'hui, « hier », sinon la date. */
+function horodatage(iso: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const j = new Date();
+  if (d.toDateString() === j.toDateString()) return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const hier = new Date(j);
+  hier.setDate(j.getDate() - 1);
+  if (d.toDateString() === hier.toDateString()) return "hier";
+  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
+/* Historique des appels (affiché seulement quand les appels sont en service). */
+function HistoriqueAppels({ video }: { video: boolean }) {
+  const [appels, setAppels] = useState<Appel[] | null>(null);
+  useEffect(() => {
+    authFetch("/social/calls/history", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows) => setAppels(Array.isArray(rows) ? rows : []))
+      .catch(() => setAppels([]));
+  }, []);
+  if (!appels) return <p className="p-6 text-center text-sm text-gray-400">Chargement…</p>;
+  if (appels.length === 0) return <p className="p-6 text-center font-semibold text-gray-500">Aucun appel pour le moment.</p>;
+  return (
+    <ul>
+      {appels.map((a) => {
+        const manque = a.direction === "entrant" && (a.status === "missed" || a.status === "cancelled");
+        const Icone = manque ? PhoneMissed : a.direction === "entrant" ? PhoneIncoming : PhoneOutgoing;
+        return (
+          <li key={a.id} className="flex items-center gap-3 border-b border-gray-50 p-3">
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${manque ? "bg-red-50 text-red-600" : "bg-gray-100 text-gray-600"}`}>
+              <Icone size={18} aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className={`block truncate font-black ${manque ? "text-red-700" : "text-black"}`}>{a.other?.display_name || "Membre MaliLink"}</span>
+              <span className="block truncate text-xs text-gray-500">
+                {a.kind === "video" ? "Vidéo" : "Audio"} · {manque ? "Manqué" : LIBELLES_STATUT[a.status]}
+                {a.status === "ended" && a.duration_seconds > 0 ? ` · ${dureeAppel(a.duration_seconds)}` : ""} · {horodatage(a.created_at)}
+              </span>
+            </span>
+            {a.other && (
+              <button type="button" onClick={() => lancerAppel({ userId: a.other!.user_id, kind: a.kind === "video" && video ? "video" : "audio", nom: a.other!.display_name, photo: a.other!.avatar_url })}
+                aria-label={`Rappeler ${a.other.display_name}`} className="rounded-full bg-gray-100 p-2.5 text-gray-700 hover:bg-gray-200">
+                {a.kind === "video" && video ? <Video size={18} /> : <Phone size={18} />}
+              </button>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 type Conversation = {
   id: number;
@@ -47,6 +101,8 @@ function MessagesInner() {
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const active = conversations.find((item) => item.id === activeId) || null;
+  const appels = useConfigAppels();
+  const [vue, setVue] = useState<"discussions" | "appels">("discussions");
 
   const loadConversations = useCallback(() => {
     authFetch("/social/messages/conversations", { cache: "no-store" })
@@ -229,14 +285,25 @@ function MessagesInner() {
             className={`${active ? "hidden md:flex" : "flex"} w-full flex-col border-r border-gray-100 md:w-2/5`}
           >
             <div className="flex items-center justify-between border-b border-gray-100 p-3.5">
-              <h1 className="text-lg font-black text-black">Messages</h1>
+              {appels.enabled ? (
+                <div className="flex rounded-xl bg-gray-100 p-1 text-sm font-black">
+                  {(["discussions", "appels"] as const).map((v) => (
+                    <button key={v} type="button" onClick={() => setVue(v)} aria-pressed={vue === v}
+                      className={`rounded-lg px-3 py-1.5 capitalize ${vue === v ? "bg-white text-black shadow-sm" : "text-gray-500"}`}>{v}</button>
+                  ))}
+                </div>
+              ) : (
+                <h1 className="text-lg font-black text-black">Messages</h1>
+              )}
               {/* Nouveau message : on choisit parmi ses amis, dans Réseau. */}
               <Link href="/social/reseau?onglet=amis" className="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-2 text-xs font-black text-gray-700">
                 <Users size={16} aria-hidden="true" /> Nouveau message
               </Link>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {conversations.length === 0 ? (
+              {appels.enabled && vue === "appels" ? (
+                <HistoriqueAppels video={appels.video} />
+              ) : conversations.length === 0 ? (
                 <div className="p-6 text-center">
                   <p className="font-semibold text-gray-500">Aucune conversation.</p>
                   <Link
@@ -277,11 +344,16 @@ function MessagesInner() {
                           : conversation.last_content || "Nouvelle conversation"}
                       </span>
                     </span>
-                    {conversation.unread_count > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-black text-white">
-                        {conversation.unread_count}
+                    <span className="flex shrink-0 flex-col items-end gap-1">
+                      <span className={`text-[11px] ${conversation.unread_count > 0 ? "font-black text-red-600" : "text-gray-400"}`}>
+                        {horodatage(conversation.last_message_at)}
                       </span>
-                    )}
+                      {conversation.unread_count > 0 && (
+                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-black text-white">
+                          {conversation.unread_count}
+                        </span>
+                      )}
+                    </span>
                   </button>
                 ))
               )}
@@ -315,6 +387,18 @@ function MessagesInner() {
                       </span>
                     </span>
                   </Link>
+                  {appels.enabled && (
+                    <div className="ml-auto flex items-center gap-1">
+                      <button type="button" aria-label={`Appel audio avec ${active.other_display_name}`}
+                        onClick={() => lancerAppel({ userId: active.other_user_id, kind: "audio", nom: active.other_display_name, photo: active.other_photo_url || null })}
+                        className="rounded-full p-2.5 text-gray-700 hover:bg-gray-100"><Phone size={20} /></button>
+                      {appels.video && (
+                        <button type="button" aria-label={`Appel vidéo avec ${active.other_display_name}`}
+                          onClick={() => lancerAppel({ userId: active.other_user_id, kind: "video", nom: active.other_display_name, photo: active.other_photo_url || null })}
+                          className="rounded-full p-2.5 text-gray-700 hover:bg-gray-100"><Video size={21} /></button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-1 space-y-2 overflow-y-auto bg-gray-50 p-3">
