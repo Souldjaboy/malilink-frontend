@@ -59,6 +59,9 @@ export default function robots(): MetadataRoute.Robots {
           "/login", "/register", "/client/login", "/client/register",
           "/mot-de-passe-oublie", "/verify-email", "/verify-phone",
           "/verification-required", "/abonnement-expire",
+          /* Vérification d'une carte ou d'un bulletin scolaire (QR) : page
+             personnelle, jamais indexée. */
+          "/verifier",
         ],
       },
     ],

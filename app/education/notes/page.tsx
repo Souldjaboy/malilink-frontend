@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { authFetch } from "../../lib/api";
+import { ouvrirDocument } from "../lib/education";
 
 type ClassItem = { id: number; name: string };
 type Subject = { id: number; name: string };
@@ -119,12 +120,14 @@ export default function EducationNotesPage() {
   };
 
   const downloadPdf = async (rc: ReportCard) => {
-    const res = await authFetch(`/education/report-cards/${rc.id}/pdf`);
-    if (!res.ok) return setMessage("❌ Erreur téléchargement du bulletin.");
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `bulletin-${rc.student_matricule || rc.id}.pdf`; a.click();
-    URL.revokeObjectURL(url);
+    const e = await ouvrirDocument(`/education/report-cards/${rc.id}/pdf`, `bulletin-${rc.student_matricule || rc.id}.pdf`);
+    if (e) setMessage(`❌ ${e}`);
+  };
+
+  // Tous les bulletins de la classe pour la période, prêts à imprimer.
+  const bulletinsClasse = async () => {
+    const e = await ouvrirDocument(`/education/classes/${rcFilter.class_id}/report-cards/pdf?term_id=${rcFilter.term_id}`, "bulletins-classe.pdf");
+    if (e) setMessage(`❌ ${e}`);
   };
 
   const saveAppreciation = async () => {
@@ -225,7 +228,10 @@ export default function EducationNotesPage() {
         </section>
 
         <section className="rounded-2xl bg-white p-6 shadow">
-          <h2 className="text-xl font-black text-gray-900">Bulletins générés</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xl font-black text-gray-900">Bulletins générés</h2>
+            <Link href="/education/parametres?onglet=bulletin" className="text-sm font-bold text-amber-700 underline">Modèle de bulletin</Link>
+          </div>
           <div className="mt-3 flex flex-wrap gap-3">
             <select value={rcFilter.class_id} onChange={(e) => { const v = e.target.value; setRcFilter({ ...rcFilter, class_id: v }); loadReportCards(v, rcFilter.term_id); }} className="rounded-xl border border-gray-300 p-3 text-gray-900">
               <option value="">Classe</option>
@@ -235,6 +241,11 @@ export default function EducationNotesPage() {
               <option value="">Toutes périodes</option>
               {terms.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
             </select>
+            {rcFilter.class_id && rcFilter.term_id && reportCards.length > 0 && (
+              <button type="button" onClick={bulletinsClasse} className="rounded-xl bg-slate-900 px-4 py-3 font-bold text-white">
+                Tous les bulletins de la classe (PDF)
+              </button>
+            )}
           </div>
           {reportCards.length === 0 ? (
             <p className="mt-3 text-gray-500">Sélectionnez une classe pour afficher les bulletins.</p>

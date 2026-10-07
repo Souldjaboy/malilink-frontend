@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Archive, ArchiveRestore, ChevronRight, FileText, GraduationCap, IdCard, Loader2, Printer, Receipt, RefreshCw, Search, UserPlus, X,
+  Archive, ArchiveRestore, ChevronRight, FileText, GraduationCap, IdCard, Loader2, Receipt, RefreshCw, Search, UserPlus, X,
 } from "lucide-react";
 import { authFetch } from "../../lib/api";
 import { formatFCFA } from "../../lib/format";
 import PhotoEleve from "../components/PhotoEleve";
 import Encaisser from "../components/Encaisser";
+import CarteEleve from "../components/CarteEleve";
 import {
   dateFr, envoyerPhotoEleve, ETATS_INSCRIPTION, libelleMode, ouvrirDocument, RELATIONS_FR,
   statutEcheance, STATUTS_ECHEANCE, urlFichier, type Classe, type Dossier, type Eleve,
@@ -20,7 +21,7 @@ import {
 type Onglet = "identite" | "scolarite" | "paiements" | "badge";
 const ONGLETS: { id: Onglet; libelle: string }[] = [
   { id: "identite", libelle: "Dossier" }, { id: "scolarite", libelle: "Scolarité" },
-  { id: "paiements", libelle: "Paiements" }, { id: "badge", libelle: "Badge" },
+  { id: "paiements", libelle: "Paiements" }, { id: "badge", libelle: "Carte & QR" },
 ];
 const STATUTS_ELEVE: Record<string, string> = {
   actif: "Actif", suspendu: "Suspendu", transfere: "Transféré", diplome: "Diplômé", abandonne: "Abandon",
@@ -45,7 +46,6 @@ function FicheEleve({ id, classes, onFermer, onChange }: { id: number; classes: 
   const [edition, setEdition] = useState(false);
   const [message, setMessage] = useState("");
   const [erreur, setErreur] = useState("");
-  const [badge, setBadge] = useState<{ qr_data_url: string } | null>(null);
   const [envoi, setEnvoi] = useState(false);
 
   const charger = useCallback(async () => {
@@ -63,10 +63,6 @@ function FicheEleve({ id, classes, onFermer, onChange }: { id: number; classes: 
   }, [id]);
 
   useEffect(() => { queueMicrotask(charger); }, [charger]);
-  useEffect(() => {
-    if (onglet !== "badge" || badge) return;
-    authFetch(`/education/students/${id}/badge`).then(async (r) => { if (r.ok) setBadge(await r.json()); }).catch(() => {});
-  }, [onglet, badge, id]);
 
   const doc = async (chemin: string, nom: string) => { const e = await ouvrirDocument(chemin, nom); if (e) setErreur(e); };
   const informer = (m: string) => { setMessage(m); setErreur(""); };
@@ -279,22 +275,7 @@ function FicheEleve({ id, classes, onFermer, onChange }: { id: number; classes: 
             })
           )}
 
-          {e && onglet === "badge" && (
-            <section className="space-y-3 rounded-2xl bg-white p-4 text-center">
-              <div id="badge-imprimable" className="mx-auto w-64 rounded-2xl border border-slate-200 p-4">
-                <div className="mx-auto h-28 w-[84px] overflow-hidden rounded-lg bg-slate-100">
-                  {e.photo_url && <img src={urlFichier(e.photo_url)} alt="" className="h-full w-full object-cover" />}
-                </div>
-                <p className="mt-2 font-black text-slate-900">{e.first_name} {e.last_name}</p>
-                <p className="font-mono text-sm text-slate-600">{e.matricule} · {e.class_name || "—"}</p>
-                {badge ? <img src={badge.qr_data_url} alt="Code QR du badge" className="mx-auto mt-2 h-40 w-40" /> : <Loader2 className="mx-auto mt-6 animate-spin text-slate-400" />}
-              </div>
-              <p className="text-xs text-slate-500">Le code QR sert au pointage des présences. Il ne contient aucune donnée personnelle.</p>
-              <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-3 font-bold text-white">
-                <Printer size={18} aria-hidden="true" /> Imprimer
-              </button>
-            </section>
-          )}
+          {e && onglet === "badge" && <CarteEleve eleveId={e.id} archive={Boolean(e.archived_at)} gestion />}
         </div>
       </section>
     </div>
@@ -383,7 +364,15 @@ export default function ElevesPage() {
           </div>
         ) : (
           <section className="overflow-hidden rounded-2xl bg-white shadow-sm">
-            <p className="border-b border-slate-100 px-4 py-2.5 text-sm font-bold text-slate-500">{eleves.length} élève(s)</p>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-2.5">
+              <p className="text-sm font-bold text-slate-500">{eleves.length} élève(s)</p>
+              {classe && !archives && (
+                <button type="button" onClick={() => ouvrirDocument(`/education/classes/${classe}/cartes/pdf`, "cartes-classe.pdf")}
+                  className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white">
+                  <IdCard size={14} aria-hidden="true" /> Cartes de la classe (planche A4)
+                </button>
+              )}
+            </div>
             <ul className="divide-y divide-slate-100">
               {eleves.map((s) => (
                 <li key={s.id}>

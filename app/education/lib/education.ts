@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { apiUrl, authFetch } from "../../lib/api";
 
 /* Outils partagés des écrans Éducation (inscription, élèves, frais). */
@@ -147,4 +148,70 @@ export async function envoyerPhotoEleve(eleveId: number, photo: Blob): Promise<{
   const r = await authFetch(`/education/students/${eleveId}/photo`, { method: "POST", body: fd });
   const d = await r.json().catch(() => null);
   return r.ok ? { url: d?.photo_url } : { erreur: d?.error || "Photo non enregistrée." };
+}
+
+/**
+ * Aperçu SVG produit par le serveur (carte, bulletin) : chargé avec le jeton,
+ * affiché par une URL locale dans une balise <img> (aucun script possible).
+ * Les changements rapprochés (couleurs, options) sont regroupés.
+ */
+export function useApercuSvg(chemin: string | null, delai = 250) {
+  const [etat, setEtat] = useState<{ chemin: string | null; url: string | null; erreur: boolean }>({ chemin: null, url: null, erreur: false });
+  useEffect(() => {
+    if (!chemin) return;
+    let actif = true;
+    let objet: string | null = null;
+    const minuterie = setTimeout(async () => {
+      try {
+        const r = await authFetch(chemin);
+        if (!r.ok) throw new Error(String(r.status));
+        objet = URL.createObjectURL(new Blob([await r.text()], { type: "image/svg+xml" }));
+        if (actif) setEtat({ chemin, url: objet, erreur: false });
+      } catch {
+        if (actif) setEtat((e) => ({ ...e, chemin, erreur: true }));
+      }
+    }, delai);
+    return () => {
+      actif = false;
+      clearTimeout(minuterie);
+      const ancien = objet;
+      if (ancien) setTimeout(() => URL.revokeObjectURL(ancien), 3000);
+    };
+  }, [chemin, delai]);
+  return { url: etat.url, erreur: etat.erreur, enCours: etat.chemin !== chemin };
+}
+
+export type Etablissement = {
+  official_name: string; short_name: string; slogan: string; address: string; city: string; phone: string; whatsapp: string;
+  email: string; website: string; director_name: string; color_primary: string; color_secondary: string;
+  active_school_year_id: number | null; active_year_label: string; matricule_prefix: string; matricule_manual_allowed: boolean;
+  card_template: string; card_options: Record<string, string | boolean>; report_template: string; report_options: Record<string, string | boolean>;
+  logo: string | null; sceau: string | null; signature: string | null; cachet: string | null;
+};
+
+export const MODELES_CARTE: { code: string; libelle: string; description: string }[] = [
+  { code: "academique", libelle: "Académique classique", description: "Bandeau officiel, typographie à empattements" },
+  { code: "moderne", libelle: "Moderne", description: "Panneau coloré, photo ronde, étiquettes" },
+  { code: "premium", libelle: "Premium", description: "Fond sombre, filets dorés" },
+  { code: "minimaliste", libelle: "Minimaliste", description: "Blanc, aéré, détails discrets" },
+  { code: "institutionnel", libelle: "Institutionnel", description: "Cadre double, guilloché, sceau" },
+  { code: "creatif", libelle: "Créatif", description: "Formes arrondies, couleurs vives" },
+];
+export const MODELES_BULLETIN: { code: string; libelle: string; description: string }[] = [
+  { code: "institutionnel", libelle: "Institutionnel", description: "Tableau quadrillé, encadrés de synthèse" },
+  { code: "academique", libelle: "Académique classique", description: "Typographie à empattements, filets" },
+  { code: "moderne", libelle: "Moderne épuré", description: "Cartes de résultats, moyennes colorées" },
+  { code: "premium", libelle: "Premium", description: "Bandeau sombre, accents dorés" },
+  { code: "compact", libelle: "Compact", description: "Dense : min/max par matière, nombreuses matières" },
+  { code: "elegant", libelle: "Élégant école privée", description: "Cadre orné, médaillons" },
+];
+
+/** Paramètres d'aperçu (modèle + options) en chaîne de requête. */
+export function requeteOptions(modele: string, options: Record<string, string | boolean | undefined>) {
+  const p = new URLSearchParams({ modele });
+  for (const [k, v] of Object.entries(options)) {
+    if (v === undefined || v === "") continue;
+    p.set(k, typeof v === "boolean" ? (v ? "1" : "0") : v);
+  }
+  return p.toString();
 }
