@@ -197,8 +197,11 @@ export default function RegisterPage() {
       const query = new URLSearchParams();
       if (verification.target_value) query.set("target", verification.target_value);
       if (registerData.user?.id) query.set("user_id", String(registerData.user.id));
+      if (verification.delivery?.statut) query.set("envoi", String(verification.delivery.statut));
 
-      setMessage("Entreprise créée. Vérifiez votre contact pour activer l'accès.");
+      setMessage(verification.delivery?.sent
+        ? "Entreprise créée. Un code a été envoyé (accepté par le serveur d'envoi) : saisissez-le pour activer l'accès."
+        : "Entreprise créée, mais l'email de vérification n'a pas pu être envoyé : demandez un nouveau code à l'étape suivante.");
       router.push(`${verifyPage}?${query.toString()}`);
     } catch (err) {
       console.error(err);

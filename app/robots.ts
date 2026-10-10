@@ -62,6 +62,7 @@ export default function robots(): MetadataRoute.Robots {
           /* Vérification d'une carte ou d'un bulletin scolaire (QR) : page
              personnelle, jamais indexée. */
           "/verifier",
+          "/confirmer-email",
         ],
       },
     ],

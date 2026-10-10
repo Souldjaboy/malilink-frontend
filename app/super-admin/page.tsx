@@ -762,6 +762,13 @@ export default function SuperAdminPage() {
                   </button>
 
                   <a
+                    href={`/super-admin/entreprises/${company.id}/modifier`}
+                    className="bg-white text-black border border-gray-300 px-3 py-2 rounded-xl font-bold"
+                  >
+                    Modifier
+                  </a>
+
+                  <a
                     href={`/super-admin/entreprises/${company.id}/facturation`}
                     className="bg-[var(--ml-blue-deep,#0a1330)] text-white px-3 py-2 rounded-xl font-bold"
                   >

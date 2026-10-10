@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import WhatsAppSupportButton from "../../components/WhatsAppSupportButton";
+import { productConfig } from "../lib/product-config";
 
 function VerificationRequiredContent() {
   const searchParams = useSearchParams();
@@ -17,7 +18,7 @@ function VerificationRequiredContent() {
   return (
     <div className="rounded-3xl bg-white p-8 text-center shadow-2xl md:p-12">
       <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-yellow-500 text-3xl font-black">
-        T
+        {productConfig.name.charAt(0)}
       </div>
       <h1 className="mb-4 text-3xl font-bold md:text-4xl">
         Vérification obligatoire

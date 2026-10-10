@@ -20,6 +20,10 @@ export default function VerifyCodeForm({ targetType }: Props) {
   const token = searchParams.get("token") || "";
   const userId = searchParams.get("user_id") || "";
   const initialTarget = searchParams.get("target") || "";
+  // État réel de l'envoi transmis par l'inscription : « accepte » = accepté
+  // par le serveur d'envoi (pas encore une preuve de réception).
+  const envoiInitial = searchParams.get("envoi") || "";
+  const [attente, setAttente] = useState(0);
 
   const title = targetType === "email" ? "Vérifiez votre email" : "Vérifiez votre téléphone";
   const inputLabel = targetType === "email" ? "Email" : "Téléphone";
@@ -27,6 +31,13 @@ export default function VerifyCodeForm({ targetType }: Props) {
   useEffect(() => {
     setTargetValue(initialTarget);
   }, [initialTarget]);
+
+  // Compte à rebours avant un nouveau renvoi (60 s imposées par le serveur).
+  useEffect(() => {
+    if (attente <= 0) return;
+    const t = setTimeout(() => setAttente((a) => a - 1), 1000);
+    return () => clearTimeout(t);
+  }, [attente]);
 
   const canSubmit = useMemo(() => Boolean(token || code.trim()), [token, code]);
 
@@ -125,12 +136,16 @@ export default function VerifyCodeForm({ targetType }: Props) {
       });
       const data = await response.json().catch(() => ({}));
 
+      if (response.status === 429 && data.retry_after) setAttente(Number(data.retry_after));
       if (!response.ok) {
-        setError(data.error || "Erreur renvoi code.");
+        setError(data.error || "Le code n'a pas pu être renvoyé.");
         return;
       }
 
-      setMessage(data.message || "Nouveau code envoyé.");
+      // Message exact du serveur : envoyé (accepté par le serveur d'envoi),
+      // déjà vérifié, ou réponse neutre si le contact ne correspond à aucun compte.
+      setMessage(data.message || "Demande enregistrée.");
+      setAttente(60);
     } catch (err) {
       console.error(err);
       setError("Erreur serveur.");
@@ -148,6 +163,16 @@ export default function VerifyCodeForm({ targetType }: Props) {
         </p>
       </div>
 
+      {!message && !error && !token && envoiInitial && envoiInitial !== "accepte" && (
+        <div className="rounded-xl bg-amber-100 p-4 font-bold text-amber-800">
+          L&apos;email de vérification n&apos;a pas pu être envoyé lors de l&apos;inscription. Utilisez « Renvoyer le code » ou contactez le support.
+        </div>
+      )}
+      {!message && !error && !token && envoiInitial === "accepte" && (
+        <div className="rounded-xl bg-blue-50 p-4 font-semibold text-blue-900">
+          Un code a été envoyé et accepté par le serveur d&apos;envoi. S&apos;il n&apos;arrive pas, vérifiez vos courriers indésirables.
+        </div>
+      )}
       {message && <div className="rounded-xl bg-green-100 p-4 font-bold text-green-700">{message}</div>}
       {error && <div className="rounded-xl bg-red-100 p-4 font-bold text-red-700">{error}</div>}
 
@@ -184,10 +209,10 @@ export default function VerifyCodeForm({ targetType }: Props) {
         <button
           type="button"
           onClick={resend}
-          disabled={loading}
-          className="w-full rounded-xl bg-black py-4 font-bold text-white"
+          disabled={loading || attente > 0 || !targetValue.trim()}
+          className="w-full rounded-xl bg-black py-4 font-bold text-white disabled:opacity-50"
         >
-          Renvoyer le code
+          {attente > 0 ? `Renvoyer le code (${attente} s)` : "Renvoyer le code"}
         </button>
       )}
     </form>
