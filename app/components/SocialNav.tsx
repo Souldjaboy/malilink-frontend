@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Compass, Home, MessageCircle, PlusSquare, ShoppingBag, UserCircle2, Users } from "lucide-react";
+import { Compass, Home, MessageCircle, PlusSquare, Radio, ShoppingBag, UserCircle2, Users } from "lucide-react";
 import { appProduct } from "../lib/product-config";
 import { authFetch, getAuthToken } from "../lib/api";
 import type { NetworkSummary } from "../lib/social";
@@ -32,9 +32,10 @@ const PROFIL: Onglet = {
   href: "/social/profil", label: "Profil", icon: UserCircle2,
   actif: (c) => c.startsWith("/social/profil") || c.startsWith("/social/settings"),
 };
+const LIVES: Onglet = { href: "/social/lives", label: "Lives", icon: Radio, actif: (c) => c.startsWith("/social/lives") };
 const MARKETPLACE: Onglet = { href: "/marketplace", label: "Marketplace", icon: ShoppingBag, actif: (c) => c.startsWith("/marketplace") };
 
-const ORDINATEUR = [ACCUEIL, DECOUVRIR, PUBLIER, MESSAGES, RESEAU, PROFIL, MARKETPLACE];
+const ORDINATEUR = [ACCUEIL, DECOUVRIR, LIVES, PUBLIER, MESSAGES, RESEAU, PROFIL, MARKETPLACE];
 const MOBILE_BAS = [ACCUEIL, DECOUVRIR, PUBLIER, MESSAGES, RESEAU];
 
 function Pastille({ n }: { n: number }) {
@@ -109,7 +110,7 @@ export default function SocialNav() {
         </nav>
         {/* Mobile et tablette : Profil et Marketplace en haut. */}
         <div className="flex items-center gap-1 lg:hidden">
-          {[PROFIL, MARKETPLACE].map((onglet) => {
+          {[LIVES, PROFIL, MARKETPLACE].map((onglet) => {
             const actif = onglet.actif(pathname);
             return (
               <Link key={onglet.href} href={onglet.href} aria-label={onglet.label} aria-current={actif ? "page" : undefined}
