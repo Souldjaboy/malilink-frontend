@@ -5,6 +5,7 @@ import Link from "next/link";
 import { authFetch } from "../lib/api";
 import { formatFCFA } from "../lib/format";
 import AIChatWidget from "../components/AIChatWidget";
+import AcademyAccess from "./AcademyAccess";
 
 type Dashboard = {
   total_students: number;
@@ -107,6 +108,7 @@ export default function EducationHomePage() {
         )}
 
         <div className="grid gap-4 md:grid-cols-3">
+          <AcademyAccess />
           {NAV.map((n) => (
             <Link key={n.href} href={n.href} className="rounded-2xl bg-white p-5 shadow transition hover:shadow-lg">
               <p className="text-3xl">{n.icon}</p>

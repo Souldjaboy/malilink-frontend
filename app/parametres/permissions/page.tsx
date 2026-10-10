@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { authFetch } from "../../lib/api";
 import { ACTION_COLUMN, type PermissionRow } from "../../lib/permissions";
+import AcademyAccess from "../../education/AcademyAccess";
 
 type Employee = { id: number; fullname: string; role: string; email?: string };
 type Registry = { actions: string[]; submodules: Record<string, string[]>; labels: Record<string, string> };
@@ -141,6 +142,7 @@ export default function PermissionsPage() {
 
   const label = (key: string) => {
     if (!key.includes(".")) return registry?.labels[key] || key;
+    if (key === "education.learning") return "— MaliLink Academy";
     return "— " + key.split(".")[1].replace(/_/g, " ");
   };
 
@@ -152,6 +154,7 @@ export default function PermissionsPage() {
           <Link href="/dashboard" className="font-bold text-blue-700">← Tableau de bord</Link>
         </div>
         <p className="text-gray-600">Gérez précisément ce que chaque employé peut voir et faire, module par module et sous-module par sous-module.</p>
+        <AcademyAccess managementOnly />
 
         {msg && <div className="rounded-xl bg-blue-50 p-4 font-semibold text-blue-900">{msg}</div>}
 

@@ -233,6 +233,7 @@ export const SIDEBAR_GROUPS: DashboardGroup[] = [
     title: "Éducation",
     items: [
       { href: "/education", label: "Éducation", icon: GraduationCap, module: "education" },
+      { href: "/education/academy", label: "MaliLink Academy", icon: BadgeCheck, module: "education.learning" },
       { href: "/education/inscriptions", label: "Inscription", icon: FileText, module: "education" },
       { href: "/education/eleves", label: "Élèves & badges", icon: Users, module: "education" },
       { href: "/education/professeurs", label: "Professeurs", icon: Users2, module: "education" },
@@ -399,6 +400,7 @@ export const DASHBOARD_SECTIONS: DashboardGroup[] = [
     title: "École / Éducation",
     items: [
       { href: "/education", label: "Éducation", description: "Écoles, élèves, classes et paiements scolaires.", icon: GraduationCap, module: "education" },
+      { href: "/education/academy", label: "MaliLink Academy", description: "Parcours pédagogiques, leçons, quiz, progression et attestations.", icon: BadgeCheck, module: "education.learning" },
       { href: "/education/inscriptions", label: "Inscription", description: "Nouvel élève ou réinscription : dossier, classe, frais, paiement.", icon: FileText, module: "education" },
       { href: "/education/eleves", label: "Élèves & badges", description: "Dossiers, photos, matricules et badges QR.", icon: Users, module: "education" },
       { href: "/education/professeurs", label: "Professeurs", description: "Fiches, matricules et affectations.", icon: Users2, module: "education" },

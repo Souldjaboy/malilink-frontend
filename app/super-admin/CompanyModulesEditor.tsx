@@ -44,6 +44,8 @@ const RAISONS: Record<string, string> = {
   profil_metier: "Profil métier",
   hors_profil: "Hors profil métier",
   defaut: "Activé par défaut",
+  academy_non_active: "Academy non activée pour cette école",
+  sous_module_desactive: "Sous-module désactivé",
 };
 
 export default function CompanyModulesEditor({ companies }: { companies: Array<{ id: number; name: string }> }) {
@@ -116,8 +118,9 @@ export default function CompanyModulesEditor({ companies }: { companies: Array<{
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow p-4 sm:p-6 mb-10">
+    <div id="modules-entreprise" className="scroll-mt-24 bg-white rounded-2xl shadow p-4 sm:p-6 mb-10">
       <h2 className="text-2xl font-bold text-black mb-2">Modules par entreprise</h2>
+      <p className="mb-3 text-slate-700">Pour une école : activez Éducation, puis MaliLink Academy. Les droits des utilisateurs se règlent séparément dans Droits &amp; permissions → Éducation → MaliLink Academy.</p>
       <p className="text-gray-500 mb-4">
         Le type d&apos;activité fixe la sélection de départ. Une décision prise ici prime sur l&apos;offre
         et ne change que cette entreprise. Désactiver masque et interdit l&apos;usage : aucune donnée n&apos;est supprimée.
