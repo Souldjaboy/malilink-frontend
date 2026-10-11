@@ -176,8 +176,19 @@ export default function ParametresPage() {
       return;
     }
 
+    // Les autres sessions sont fermées : celle-ci reçoit un nouveau jeton.
+    if (data.token) {
+      for (const cle of ["token", "business_token", "client_token"]) {
+        if (localStorage.getItem(cle)) localStorage.setItem(cle, data.token);
+      }
+      for (const nom of ["triangle_business_token", "triangle_client_token"]) {
+        if (document.cookie.split("; ").some((c) => c.startsWith(`${nom}=`))) {
+          document.cookie = `${nom}=${encodeURIComponent(data.token)}; path=/; max-age=86400; SameSite=Lax`;
+        }
+      }
+    }
     setPasswordForm({ current_password: "", new_password: "" });
-    setMessage("Mot de passe modifié avec succès.");
+    setMessage(data.message || "Mot de passe modifié avec succès.");
   };
 
   return (
